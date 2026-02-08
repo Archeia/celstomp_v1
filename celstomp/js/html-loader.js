@@ -9,7 +9,6 @@
         './parts/modals.js'
     ];
 
-    // Defines the application logic scripts to load AFTER DOM is ready
     const appScripts = [
         './js/ui-components.js',
         './celstomp-imgseq.js',
