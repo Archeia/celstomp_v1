@@ -2,8 +2,10 @@
 a site where you could animate on (vibecoded help)
 
 I'd like to preface by saying that this site was vibecoded.
+
 I'm by no means in any way a traditional programmer, but i had just wanted to make animation more accessible and intuitive.
-Therefore i'm including all the messy comments the AI had wrote, as i understand that it may be helpful for some trying to navigate around the horrendous code.
+Therefore i'm including all the messy comments the AI had wrote, as i understand that it may be helpful for some trying to navigate around the horrendous code. (I apologize for this)
+
 I come from an art background, but interested in learning code.
 I'm a bit ashamed of using vibecoding to create this, so any feedback about this will be greatly appreciated as im trying to learn along the way. Thank you!
 
