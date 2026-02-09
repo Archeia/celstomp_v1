@@ -1,22 +1,21 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-  
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+
   <title>ginyo's CELSTOMP</title>
-  <!-- icons -->
-  <link rel="icon" href="./icons/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
 
 
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#000000">
 
-  <!-- CSS -->
-<link rel="stylesheet" href="./celstomp-styles.css" />
+
+  <link rel="stylesheet" href="./css/main.css" />
 </head>
 
 <body>
@@ -30,24 +29,16 @@
     </div>
 
     <div class="topSlot right">
-      <button id="infoBtn"
-              class="topBtn"
-              type="button"
-              aria-controls="infoPanel"
-              aria-expanded="false"
-              title="Info">
+      <button id="infoBtn" class="topBtn" type="button" aria-controls="infoPanel" aria-expanded="false" title="Info">
         ℹ︎ Info
       </button>
     </div>
   </header>
 
-  <!-- INFO_PANEL (unique anchor) -->
+
   <div id="infoBackdrop" class="infoBackdrop" hidden></div>
 
-  <aside id="infoPanel"
-        class="infoPanel"
-        aria-hidden="true"
-        tabindex="-1">
+  <aside id="infoPanel" class="infoPanel" aria-hidden="true" tabindex="-1">
     <div class="infoHeader">
       <div class="infoTitle">Celstomp Info</div>
 
@@ -59,7 +50,7 @@
       </p>
 
       <div class="infoBtns">
-        <!-- Replace these hrefs with your real links -->
+
         <a class="infoLinkBtn" href="https://ko-fi.com/ginyoa" target="_blank" rel="noopener">Support me on Kofi!</a>
         <a class="infoLinkBtn" href="https://instagram.com/ginyoagoldie" target="_blank" rel="noopener">Instagram</a>
         <a class="infoLinkBtn" href="https://x.com/ginyoagoldie" target="_blank" rel="noopener">Twitter</a>
@@ -71,9 +62,10 @@
       <ul class="infoList">
 
 
-        <li>This site is vibecoded (coded with the help of AI). I am by no means in any way a traditional programmer, I had just wanted to make animation more accessible and intuitive!</li>
-      
-      
+        <li>This site is vibecoded (coded with the help of AI). I am by no means in any way a traditional programmer, I
+          had just wanted to make animation more accessible and intuitive!</li>
+
+
         <li>Its limited to a simple pixel brush and a simple layer system</li>
 
         <li>Shortcuts: 1, 2, 3, 4, 5, 6 for the Tools</li>
@@ -81,24 +73,24 @@
         <li>Left/Right or E/R for Prev/Next Frame</li>
         <li>You can drag the colored squares in the layer to reorder the layering of it</li>
 
-       
-  
+
+
         <li>Right click on some of the tools + onion skin to reveal more settings</li>
       </ul>
     </div>
   </aside>
 
   <div class="app">
-    
 
-    <!-- STAGE -->
+
+
     <main id="stageWrap">
       <div id="stage">
-         <!--<button class="chip" id="infoBtn">ℹ︎ Info</button>
--->
+
         <div id="infoPanelLegacy" style="display:none;">
           <h3>CELSTOMP — Credits &amp; Info</h3>
-          <p>A <em>cel</em> is treated as a group of its layers (Fill, Sketch, Color, Lineart). Holds and onion-skins operate at the cel level.</p>
+          <p>A <em>cel</em> is treated as a group of its layers (Fill, Sketch, Color, Lineart). Holds and onion-skins
+            operate at the cel level.</p>
           <p><strong>References used:</strong></p>
           <ul style="margin:6px 0 0 18px; color:#cbd6e2;">
             <li>OKLCH Color Picker via Color.js Web Components (elements.colorjs.io)</li>
@@ -113,9 +105,9 @@
         <canvas id="drawCanvas"></canvas>
         <canvas id="fxCanvas"></canvas>
 
-        <div id="hud"> 
+        <div id="hud">
 
-        
+
           <span>Tool: <strong id="toolName">Brush</strong></span>
           <span class="sep"></span>
           <span>FPS: <strong id="hudFps">24</strong></span>
@@ -125,19 +117,19 @@
           <span>Time: <strong id="hudTime">0s+0f</strong></span>
           <span class="sep"></span>
           <span>Zoom: <strong id="zoomInfo">100%</strong></span>
-     
+
         </div>
       </div>
     </main>
 
-    <!-- CELSTOMP PANEL -->
+
     <div id="floatingIsland" class="islandDock">
       <div class="islandHeader" id="floatingIslandHeader">
         <div class="islandTitle">CELSTOMP</div>
         <div class="islandBtns">
           <button class="islandBtn" id="islandCollapseBtn" title="Collapse">—</button>
           <button id="islandSideBtn" class="islandBtn" title="Side panel" aria-label="Toggle side panel">&gt;</button>
-          
+
         </div>
       </div>
 
@@ -145,199 +137,247 @@
         <div class="islandTop">
           <div class="islandPanel islandWheelSlot" id="islandWheelSlot"></div>
 
-            <div id="hsvWheelWrap" class="hsv-wheel">
-              <canvas id="hsvWheelCanvas"></canvas>
-              <div id="hsvWheelPreview" class="hsv-wheel-preview" title="Current color"></div>
+          <div id="hsvWheelWrap" class="hsv-wheel">
+            <canvas id="hsvWheelCanvas"></canvas>
+            <div id="hsvWheelPreview" class="hsv-wheel-preview" title="Current color"></div>
 
+          </div>
+
+
+
+          <div class="islandPanel islandToolsSlot" id="islandToolsSlot"></div>
+
+          <div class="seg" id="toolSeg">
+            <input checked id="tool-brush" data-tool="brush" name="tool" type="radio" value="brush" />
+            <label for="tool-brush" data-tool="brush" id="toolBrushLabel">Brush</label>
+
+            <input id="tool-eraser" data-tool="eraser" name="tool" type="radio" value="eraser" />
+            <label for="tool-eraser" data-tool="eraser" id="toolEraserLabel">Eraser</label>
+
+            <input id="tool-fillbrush" data-tool="fill-brush" name="tool" type="radio" value="fill-brush" />
+            <label for="tool-fillbrush" data-tool="fill-brush">Fill Brush</label>
+
+            <input id="tool-filleraser" data-tool="fill-eraser" name="tool" type="radio" value="fill-eraser" />
+            <label for="tool-filleraser" data-tool="fill-eraser">Eraser Fill</label>
+
+            <input id="tool-lassoFill" data-tool="lasso-fill" name="tool" type="radio" value="lasso-fill" />
+            <label for="tool-lassoFill" data-tool="lasso-fill">Lasso Fill</label>
+
+            <input id="tool-lassoErase" data-tool="lasso-erase" name="tool" type="radio" value="lasso-erase" />
+            <label for="tool-lassoErase" data-tool="lasso-erase">Lasso Erase</label>
+
+            <input id="tool-rectSelect" data-tool="rect-select" name="tool" type="radio" value="rect-select" />
+            <label for="tool-rectSelect" data-tool="rect-select">Rect Select</label>
+
+            <input id="tool-eyedropper" data-tool="eyedropper" name="tool" type="radio" value="eyedropper" />
+            <label for="tool-eyedropper" data-tool="eyedropper">Eyedropper</label>
+          </div>
+
+          <div id="mainBrushSizeGroup" class="mainBrushSizeGroup" aria-label="Brush size controls">
+            <label for="brushSizeRange">Brush Size</label>
+            <div id="mainBrushSizeControls" class="mainBrushSizeControls">
+              <input id="brushSizeRange" type="range" min="1" max="400" step="1" value="3" />
+              <input id="brushSizeNum" type="number" min="1" max="400" step="1" value="3" inputmode="numeric" />
             </div>
-        
-        
-        
-            <div class="islandPanel islandToolsSlot" id="islandToolsSlot"></div>
-        
-              <div class="seg" id="toolSeg">
-                <input checked id="tool-brush" data-tool="brush" name="tool" type="radio" value="brush" />
-                <label for="tool-brush" data-tool="brush" id="toolBrushLabel">Brush</label>
-
-                <input id="tool-eraser" data-tool="eraser" name="tool" type="radio" value="eraser" />
-                <label for="tool-eraser" data-tool="eraser" id="toolEraserLabel">Eraser</label>
-
-                <input id="tool-fillbrush" data-tool="fill-brush" name="tool" type="radio" value="fill-brush" />
-                <label for="tool-fillbrush" data-tool="fill-brush">Fill Brush</label>
-
-                <input id="tool-filleraser" data-tool="fill-eraser" name="tool" type="radio" value="fill-eraser" />
-                <label for="tool-filleraser" data-tool="fill-eraser">Eraser Fill</label>
-
-                <input id="tool-lassoFill" data-tool="lasso-fill" name="tool" type="radio" value="lasso-fill" />
-                <label for="tool-lassoFill" data-tool="lasso-fill">Lasso Fill</label>
-
-                <input id="tool-lassoErase" data-tool="lasso-erase" name="tool" type="radio" value="lasso-erase" />
-                <label for="tool-lassoErase" data-tool="lasso-erase">Lasso Erase</label>
-              </div>
-      
           </div>
-        
+
         </div>
-        <div class="islandPanel" id="islandLayersSlot">
-          <!-- Layers -->
-          <div class="seg" id="layerSeg" role="tablist" aria-label="Layers">
 
-            <input checked id="bt-line" name="btype" type="radio" value="line" />
-            <label for="bt-line">
-              <span class="layerName">LINE</span>
-              <span class="layerSwatches" id="swatches-line"></span>
-            </label>
+      </div>
+      <div class="islandPanel" id="islandLayersSlot">
 
-            <input id="bt-color" name="btype" type="radio" value="shade" />
-            <label for="bt-color">
-              <span class="layerName">SHADE</span>
-              <span class="layerSwatches" id="swatches-shade"></span>
-            </label>
+        <div class="seg" id="layerSeg" role="tablist" aria-label="Layers">
 
-            <input id="bt-sketch" name="btype" type="radio" value="color" />
-            <label for="bt-sketch">
-              <span class="layerName">COLOR</span>
-              <span class="layerSwatches" id="swatches-color"></span>
-            </label>
+          <input checked id="bt-line" name="btype" type="radio" value="line" />
+          <label for="bt-line">
+            <span class="layerName">LINE</span>
+            <span class="layerSwatches" id="swatches-line"></span>
+          </label>
 
-            <input id="bt-fill" name="btype" type="radio" value="fill" />
-            <label for="bt-fill">
-              <span class="layerName">FILL</span>
-              <span class="layerSwatches" id="swatches-fill"></span>
-            </label>
+          <input id="bt-color" name="btype" type="radio" value="shade" />
+          <label for="bt-color">
+            <span class="layerName">SHADE</span>
+            <span class="layerSwatches" id="swatches-shade"></span>
+          </label>
 
-            <input id="bt-paper" name="btype" type="radio" value="paper" />
-            <label for="bt-paper">
-              <span class="layerName">PAPER</span>
-              <span class="layerSwatches" id="swatches-paper"></span>
-            </label>
+          <input id="bt-sketch" name="btype" type="radio" value="color" />
+          <label for="bt-sketch">
+            <span class="layerName">COLOR</span>
+            <span class="layerSwatches" id="swatches-color"></span>
+          </label>
 
-          </div>
+          <input id="bt-fill" name="btype" type="radio" value="fill" />
+          <label for="bt-fill">
+            <span class="layerName">FILL</span>
+            <span class="layerSwatches" id="swatches-fill"></span>
+          </label>
+
+          <input id="bt-paper" name="btype" type="radio" value="paper" />
+          <label for="bt-paper">
+            <span class="layerName">PAPER</span>
+            <span class="layerSwatches" id="swatches-paper"></span>
+          </label>
+
         </div>
-        
-
-        
       </div>
 
-      <button id="islandTab" type="button">celstomp</button>
+
+
     </div>
 
-    <div id="islandSidePanel" class="islandSidePanel" aria-hidden="true">
-      <div class="islandSideHeader">Side Panel</div>
-      <div class="islandSideBody" id="islandSideBody">
-        <div class="islandSideGrid">
+    <button id="islandTab" type="button">celstomp</button>
+  </div>
+
+  <div id="islandSidePanel" class="islandSidePanel" aria-hidden="true">
+    <div class="islandSideHeader">Side Panel</div>
+    <div class="islandSideBody" id="islandSideBody">
+      <div class="islandSideGrid">
 
 
-          <button id="saveProj">Save</button>
-          <button id="loadProj">Load</button>
-          <button id="fillCurrent">Fill current cel</button>
-          <button id="fillAll">Fill all cels</button>
-      
+        <button id="saveProj">Save</button>
+        <button id="loadProj">Load</button>
+        <button id="restoreAutosave" title="Restore latest autosaved draft" disabled>Restore Draft</button>
+        <div id="saveStateBadge" class="saveStateBadge" role="status" aria-live="polite">Saved</div>
+        <button id="pickColorTool">Pick Color Tool</button>
+        <button id="addPaletteColor">Add Color</button>
+        <button id="fillCurrent">Fill current cel</button>
+        <button id="fillAll">Fill all cels</button>
+        <button id="clearAllBtn" type="button" class="danger">Clear All</button>
 
-          <label class="chip"><input id="autofillToggle" type="checkbox" unchecked /> Autofill on draw</label>
 
-          <button id="fitView" title="Reset size &amp; recenter">Recenter Canvas</button>
-          <button id="exportMP4">Export MP4 </button>
-                   <button id="exportImgSeqBtn" class="button">Export Img Seq </button>
+        <label class="chip"><input id="autofillToggle" type="checkbox" unchecked /> Autofill on draw</label>
 
+        <label class="sideSelectRow" for="stabilizationLevel">
+          <span>Stabilization Level</span>
+          <select id="stabilizationLevel">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+
+        <div id="penControls" hidden>
+          <label class="sideSelectRow" for="pressureSize">
+            <span>Pen Pressure Size</span>
+            <input id="pressureSize" type="checkbox" checked />
+          </label>
+          <label class="sideSelectRow" for="pressureOpacity">
+            <span>Pen Pressure Opacity</span>
+            <input id="pressureOpacity" type="checkbox" />
+          </label>
+          <label class="sideSelectRow" for="pressureTilt">
+            <span>Pen Tilt</span>
+            <input id="pressureTilt" type="checkbox" />
+          </label>
         </div>
 
-        <div class="islandSideRow">
-         <!-- <button id="exportWebM">Export WebM (clip)</button>
-          -->
-        </div>
+        <button id="fitView" title="Reset size &amp; recenter">Recenter Canvas</button>
+        <button id="exportMP4">Export MP4 </button>
+        <button id="exportImgSeqBtn" class="button">Export Img Seq </button>
+
+      </div>
+
+      <div id="paletteBar" class="paletteBar" aria-label="Saved colors"></div>
+    </div>
+  </div>
+
+
+  <section id="timeline">
+    <div id="timelineHeader">
+
+      <button id="tlMobLeftBtn" class="tlMobArrow tlMobLeft" type="button" aria-label="Toggle timeline info"
+        aria-expanded="false">▴</button>
+      <button id="tlMobRightBtn" class="tlMobArrow tlMobRight" type="button" aria-label="Toggle timeline options"
+        aria-expanded="false">▴</button>
+
+
+      <div class="left">
+        <strong>Timeline</strong>
+        <span class="badge" id="timeCounter">0s+0f</span>
+        <span class="badge">Loop <input id="loopToggle" type="checkbox" checked
+            style="vertical-align:middle; margin-left:6px;" /></span>
+      </div>
+
+
+      <div class="center" id="tlHeaderCenter">
+        <button id="tlPrevCel">◀︎ Cel</button>
+        <button id="tlPrevFrame">◀︎ Frame</button>
+        <button id="tlPlayToggle">▶︎ / ⏸</button>
+        <button id="tlNextFrame">Frame ▶︎</button>
+        <button id="tlNextCel">Cel ▶︎</button>
+      </div>
+
+      <div class="right">
+
+
+        <label><input id="tlOnion" type="checkbox" /> Onion</label>
+        <button id="tlDupCel">Duplicate Cel</button>
+
+        <label for="tlSnap">Snap (frames)</label>
+        <input id="tlSnap" type="number" min="1" style="width:70px;" />
+        <label><input id="tlPlaySnapped" type="checkbox" /> Play snapped</label>
+
+        <label for="tlSeconds">Seconds</label>
+        <input id="tlSeconds" type="number" min="1" style="width:70px;" />
+
+        <label for="tlFps">FPS</label>
+        <input id="tlFps" type="number" min="1" style="width:70px;" />
+
+
+        <button id="hideTimelineBtn">—</button>
       </div>
     </div>
 
-    <!-- TIMELINE -->
-    <section id="timeline">
-      <div id="timelineHeader">
-
-        <button id="tlMobLeftBtn" class="tlMobArrow tlMobLeft" type="button" aria-label="Toggle timeline info" aria-expanded="false">▴</button>
-        <button id="tlMobRightBtn" class="tlMobArrow tlMobRight" type="button" aria-label="Toggle timeline options" aria-expanded="false">▴</button>
-
-
-        <div class="left">
-          <strong>Timeline</strong>
-          <span class="badge" id="timeCounter">0s+0f</span>
-          <span class="badge">Loop <input id="loopToggle" type="checkbox" checked style="vertical-align:middle; margin-left:6px;" /></span>
-        </div>
-
-        <!-- NOTE: only ONE set of tlPrevCel/tlNextCel IDs now -->
-        <div class="center" id="tlHeaderCenter">
-          <button id="tlPrevCel">◀︎ Cel</button>
-          <button id="tlPrevFrame">◀︎ Frame</button>
-          <button id="tlPlayToggle">▶︎ / ⏸</button>
-          <button id="tlNextFrame">Frame ▶︎</button>
-          <button id="tlNextCel">Cel ▶︎</button>
-        </div>
-
-        <div class="right">
-  
-
-          <label><input id="tlOnion" type="checkbox" /> Onion</label>
-          <button id="tlDupCel">Duplicate Cel</button>
-
-          <label for="tlSnap">Snap (frames)</label>
-          <input id="tlSnap" type="number" min="1" style="width:70px;" />
-          <label><input id="tlPlaySnapped" type="checkbox" /> Play snapped</label>
-
-          <label for="tlSeconds">Seconds</label>
-          <input id="tlSeconds" type="number" min="1" style="width:70px;" />
-
-          <label for="tlFps">FPS</label>
-          <input id="tlFps" type="number" min="1" style="width:70px;" />
+    <div id="timelineScroll">
+      <div id="playheadMarker"></div>
+      <div id="clipStartMarker"></div>
+      <div id="clipEndMarker"></div>
+      <table id="timelineTable" aria-label="Timeline grid"></table>
+    </div>
+  </section>
 
 
-          <button id="hideTimelineBtn">—</button>
-        </div>
-      </div>
-
-      <div id="timelineScroll">
-        <div id="playheadMarker"></div>
-        <div id="clipStartMarker"></div>
-        <div id="clipEndMarker"></div>
-        <table id="timelineTable" aria-label="Timeline grid"></table>
-      </div>
-    </section>
-<!--
-    <button id="showLeftEdge" class="edge-btn">Show Sidebar</button>
-    <button id="showRightEdge" class="edge-btn">Show Colors &amp; Tools</button>
-    -->
-    
-    <button id="showTimelineEdge" class="edge-btn">Show Timeline</button>
+  <button id="showTimelineEdge" class="edge-btn">Show Timeline</button>
 
 
 
   </div>
 
 
-  <!-- Hidden bridge toggles  -->
+
   <div id="hiddenToggles" style="display:none">
     <button id="toggleOnion" type="button">Onion: Off</button>
- 
- 
+
+
     <label><input id="tlTransparency" type="checkbox"> Trans</label>
-    
+
   </div>
 
 
 
 
 
-  <input id="loadFileInp"
-        type="file"
-        accept=".json,application/json"
-        style="position:fixed; left:-9999px; width:1px; height:1px; opacity:0;" />
-
-  <!-- JS -->
+  <input id="loadFileInp" type="file" accept=".json,application/json"
+    style="position:fixed; left:-9999px; width:1px; height:1px; opacity:0;" />
 
 
-  
+
+
+
+  <script src="./celstomp-imgseq.js"></script>
+  <script src="./celstomp-autosave.js"></script>
   <script src="./celstomp-app.js"></script>
 
 
-  <!-- Onion options -->
+
   <div id="onionOptionsStash" aria-hidden="true">
     <div id="onionOptionsBlock">
       <div class="subhead">Onion Options</div>
@@ -360,8 +400,8 @@
 
       <div class="row">
         <label class="chip"><input id="keepOnionPlaying" type="checkbox" /> Keep onion on play</label>
-  
-   
+
+
         <label class="chip"><input id="keepTransPlaying" type="checkbox" /> Keep transparency on play</label>
       </div>
 
@@ -370,8 +410,18 @@
   </div>
 
   <div id="onionCtxMenu" aria-hidden="true"></div>
-  
-  
+
+  <div id="clearAllModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="clearAllModal" class="modalCard" role="dialog" aria-modal="true" aria-labelledby="clearAllModalTitle" hidden>
+    <h3 id="clearAllModalTitle">Clear All</h3>
+    <p>This will clear all frames and layers and reset undo history.</p>
+    <div class="modalActions">
+      <button id="clearAllCancelBtn" type="button">Cancel</button>
+      <button id="clearAllConfirmBtn" type="button" class="danger">Clear</button>
+    </div>
+  </div>
+
+
   <script>
     // SW_REGISTER (unique anchor)
     if ("serviceWorker" in navigator) {
@@ -382,4 +432,5 @@
   </script>
 
 </body>
+
 </html>

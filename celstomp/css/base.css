@@ -1,0 +1,119 @@
+[hidden]{
+  display:none !important;
+}
+
+*{ box-sizing:border-box; }
+html,body{ 
+  height:100%; margin:0; 
+  font-family: var(--font);
+}
+html{ overflow-y: scroll; }
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+
+  font-size: var(--ui-font);
+  line-height: 1.35;
+  font-family: var(--font);
+
+  overflow:hidden;               
+  overscroll-behavior:none;
+}
+
+#stage, #drawCanvas, #fxCanvas, #boundsCanvas{
+  touch-action:none;
+  -ms-touch-action:none;
+}
+#floatingIslandHeader{ touch-action: none; }
+
+button,
+input,
+select,
+textarea{
+  font-family: var(--font);
+}
+
+:where(button, .seg input + label, .dock-btn, .edge-btn){
+  background:var(--btn-bg);
+  color:#dfe7f1;
+  border:1px solid var(--btn-bd);
+  border-radius:10px;
+  padding:8px 10px;
+  cursor:pointer;
+}
+:where(button, .seg input + label, .dock-btn, .edge-btn):hover{
+  background:var(--btn-bg-h);
+  border-color:var(--btn-bd-h);
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:6px 0;
+  flex-wrap:wrap;
+}
+.row label{
+  color:#c7d0db;
+  min-width:108px;
+}
+
+.btns{ display:flex; flex-wrap:wrap; gap:8px; }
+
+.seg{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.seg input{ display:none; }
+.seg label{
+  user-select:none;
+  padding:6px 12px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:220px;
+}
+.seg input:checked + label{
+  background:var(--btn-bg-h);
+  border-color:var(--btn-bd-h);
+}
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border:1px solid var(--btn-bd);
+  border-radius:8px;
+  background:#151c26;
+  font-size:12px;
+  color:#c7d0db;
+}
+.swatch{
+  width:16px;
+  height:16px;
+  border-radius:4px;
+  border:1px solid var(--btn-bd);
+}
+
+.badge{
+  font-size:12px;
+  color:#c7d0db;
+  background:#1a2230;
+  border:1px solid var(--btn-bd);
+  border-radius:999px;
+  padding:3px 10px;
+}
+
+@media (max-width: 720px){
+  html,
+  body,
+  .app{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}

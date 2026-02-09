@@ -1,0 +1,12 @@
+{
+  "name": "Celstomp",
+  "short_name": "Celstomp",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    { "src": "./icons/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
