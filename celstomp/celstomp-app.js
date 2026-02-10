@@ -1,23 +1,5 @@
 (() => {
     "use strict";
-    function isClipEligibleMainLayer(kindOrType) {
-        const k = String(kindOrType || "").toLowerCase();
-        return k === "line" || k === "shade" || k === "color";
-    }
-    const _clipWork = document.createElement("canvas");
-    const _clipWorkCtx = _clipWork.getContext("2d");
-    const _clipMask = document.createElement("canvas");
-    const _clipMaskCtx = _clipMask.getContext("2d");
-    function ensureClipBuffers(w, h) {
-        if (_clipWork.width !== w || _clipWork.height !== h) {
-            _clipWork.width = w;
-            _clipWork.height = h;
-        }
-        if (_clipMask.width !== w || _clipMask.height !== h) {
-            _clipMask.width = w;
-            _clipMask.height = h;
-        }
-    }
     let _liveColorDialogLock = false;
     function rafThrottle(fn) {
         let queued = false;
@@ -141,23 +123,24 @@
             picker.value = norm;
         } catch {}
         if (picker._pickCleanup) picker._pickCleanup();
-        let fired = false;
-        const finish = () => {
-            if (fired) return;
-            fired = true;
+        const onInput = () => {
             const v = picker.value || norm;
+            try {
+                onPick?.(v);
+            } catch {}
+        };
+        const onChange = () => {
+            const v = picker.value || norm;
+            try {
+                onPick?.(v);
+            } catch {}
             try {
                 picker._pickCleanup?.();
             } catch {}
             try {
                 picker.blur?.();
             } catch {}
-            try {
-                onPick?.(v);
-            } catch {}
         };
-        const onInput = () => finish();
-        const onChange = () => finish();
         picker.addEventListener("input", onInput, {
             passive: true
         });
@@ -344,6 +327,115 @@
             popup.setAttribute("aria-hidden", "true");
             popup.classList.remove("open");
         }
+        function menuFocusableItems(panel) {
+            if (!panel) return [];
+            return Array.from(panel.querySelectorAll("button:not([disabled]), select, input[type='checkbox']")).filter(el => !el.hidden);
+        }
+        function closeSubmenu(triggerBtn, panel) {
+            if (panel) panel.hidden = true;
+            if (triggerBtn) triggerBtn.setAttribute("aria-expanded", "false");
+        }
+        function openSubmenu(triggerBtn, panel) {
+            if (!panel || !triggerBtn) return;
+            panel.hidden = false;
+            triggerBtn.setAttribute("aria-expanded", "true");
+        }
+        function closeTopMenus() {
+            [ [ menuFileBtn, menuFilePanel ], [ menuEditBtn, menuEditPanel ], [ menuToolBehaviorBtn, menuToolBehaviorPanel ] ].forEach(([btn, panel]) => {
+                if (panel) panel.hidden = true;
+                btn?.setAttribute("aria-expanded", "false");
+            });
+            [ [ menuExportBtn, menuExportPanel ], [ menuAutosaveBtn, menuAutosavePanel ] ].forEach(([btn, panel]) => closeSubmenu(btn, panel));
+        }
+        function openTopMenu(btn, panel) {
+            if (!btn || !panel) return;
+            closeTopMenus();
+            panel.hidden = false;
+            btn.setAttribute("aria-expanded", "true");
+            const first = menuFocusableItems(panel)[0];
+            if (first && window.matchMedia("(min-width: 721px)").matches) {
+                try {
+                    first.focus({
+                        preventScroll: true
+                    });
+                } catch {}
+            }
+        }
+        function wireTopMenus() {
+            if (!topMenuBar || topMenuBar.dataset.wiredMenus === "1") return;
+            topMenuBar.dataset.wiredMenus = "1";
+            const triggerPairs = [ [ menuFileBtn, menuFilePanel ], [ menuEditBtn, menuEditPanel ], [ menuToolBehaviorBtn, menuToolBehaviorPanel ] ];
+            triggerPairs.forEach(([btn, panel]) => {
+                if (!btn || !panel) return;
+                btn.addEventListener("click", e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const open = !panel.hidden;
+                    if (open) closeTopMenus(); else openTopMenu(btn, panel);
+                });
+                btn.addEventListener("keydown", e => {
+                    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openTopMenu(btn, panel);
+                    }
+                });
+            });
+            [ [ menuExportBtn, menuExportPanel ], [ menuAutosaveBtn, menuAutosavePanel ] ].forEach(([btn, panel]) => {
+                btn?.addEventListener("click", e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (panel?.hidden) openSubmenu(btn, panel); else closeSubmenu(btn, panel);
+                });
+                btn?.addEventListener("keydown", e => {
+                    if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openSubmenu(btn, panel);
+                        const first = menuFocusableItems(panel)[0];
+                        first?.focus?.();
+                    }
+                });
+            });
+            const wirePanelKeys = panel => {
+                panel?.addEventListener("keydown", e => {
+                    const items = menuFocusableItems(panel);
+                    if (!items.length) return;
+                    const idx = Math.max(0, items.indexOf(document.activeElement));
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        items[(idx + 1) % items.length].focus();
+                    } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        items[(idx - 1 + items.length) % items.length].focus();
+                    } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        closeTopMenus();
+                    } else if (e.key === "ArrowLeft" && panel?.classList?.contains("topSubmenuPanel")) {
+                        e.preventDefault();
+                        const trigger = topMenuBar?.querySelector(`.topSubmenuTrigger[aria-controls="${panel.id}"]`) || null;
+                        closeSubmenu(trigger, panel);
+                        trigger?.focus?.();
+                    }
+                });
+            };
+            wirePanelKeys(menuFilePanel);
+            wirePanelKeys(menuEditPanel);
+            wirePanelKeys(menuToolBehaviorPanel);
+            wirePanelKeys(menuExportPanel);
+            wirePanelKeys(menuAutosavePanel);
+            document.addEventListener("mousedown", e => {
+                if (!topMenuBar.contains(e.target)) closeTopMenus();
+            });
+            document.addEventListener("keydown", e => {
+                if (e.key === "Escape") closeTopMenus();
+            });
+            [ menuFilePanel, menuEditPanel, menuToolBehaviorPanel, menuExportPanel, menuAutosavePanel ].forEach(panel => {
+                panel?.addEventListener("click", e => {
+                    if (e.target.closest("button") && !e.target.closest(".topSubmenuTrigger")) {
+                        closeTopMenus();
+                    }
+                });
+            });
+        }
         toolSeg.addEventListener("contextmenu", e => {
             const lab = e.target.closest("label[data-tool]");
             if (!lab) return;
@@ -376,12 +468,43 @@
         const loadProjBtn = document.getElementById("loadProj");
         const loadFileInp = document.getElementById("loadFileInp");
         const restoreAutosaveBtn = document.getElementById("restoreAutosave");
+        const toggleAutosaveBtn = document.getElementById("toggleAutosaveBtn");
+        const autosaveIntervalBtn = document.getElementById("autosaveIntervalBtn");
         const saveStateBadgeEl = document.getElementById("saveStateBadge");
         const exportImgSeqBtn = document.getElementById("exportImgSeqBtn") || document.getElementById("exportImgSeq");
         const clearAllModal = document.getElementById("clearAllModal");
         const clearAllModalBackdrop = document.getElementById("clearAllModalBackdrop");
         const clearAllConfirmBtn = document.getElementById("clearAllConfirmBtn");
         const clearAllCancelBtn = document.getElementById("clearAllCancelBtn");
+        const exportGIFBtn = document.getElementById("exportGIFBtn");
+        const exportImgSeqModal = document.getElementById("exportImgSeqModal");
+        const exportImgSeqModalBackdrop = document.getElementById("exportImgSeqModalBackdrop");
+        const exportImgSeqTransparencyToggle = document.getElementById("exportImgSeqTransparency");
+        const exportImgSeqConfirmBtn = document.getElementById("exportImgSeqConfirmBtn");
+        const exportImgSeqCancelBtn = document.getElementById("exportImgSeqCancelBtn");
+        const exportGifModal = document.getElementById("exportGifModal");
+        const exportGifModalBackdrop = document.getElementById("exportGifModalBackdrop");
+        const exportGifFpsInput = document.getElementById("exportGifFps");
+        const exportGifTransparencyToggle = document.getElementById("exportGifTransparency");
+        const exportGifLoopToggle = document.getElementById("exportGifLoop");
+        const exportGifConfirmBtn = document.getElementById("exportGifConfirmBtn");
+        const exportGifCancelBtn = document.getElementById("exportGifCancelBtn");
+        const autosaveIntervalModal = document.getElementById("autosaveIntervalModal");
+        const autosaveIntervalModalBackdrop = document.getElementById("autosaveIntervalModalBackdrop");
+        const autosaveIntervalMinutesInput = document.getElementById("autosaveIntervalMinutesInput");
+        const autosaveIntervalConfirmBtn = document.getElementById("autosaveIntervalConfirmBtn");
+        const autosaveIntervalCancelBtn = document.getElementById("autosaveIntervalCancelBtn");
+        const topMenuBar = document.getElementById("topMenuBar");
+        const menuFileBtn = document.getElementById("menuFileBtn");
+        const menuFilePanel = document.getElementById("menuFilePanel");
+        const menuEditBtn = document.getElementById("menuEditBtn");
+        const menuEditPanel = document.getElementById("menuEditPanel");
+        const menuToolBehaviorBtn = document.getElementById("menuToolBehaviorBtn");
+        const menuToolBehaviorPanel = document.getElementById("menuToolBehaviorPanel");
+        const menuAutosaveBtn = document.getElementById("menuAutosaveBtn");
+        const menuAutosavePanel = document.getElementById("menuAutosavePanel");
+        const menuExportBtn = document.getElementById("menuExportBtn");
+        const menuExportPanel = document.getElementById("menuExportPanel");
         const stabilizationSelect = $("stabilizationLevel");
         const penControls = $("penControls");
         const pressureSizeToggle = $("pressureSize") || $("usePressureSize");
@@ -600,16 +723,38 @@
             FILL: 0,
             COLOR: 1,
             SHADE: 2,
-            LINE: 3
+            LINE: 3,
+            SKETCH: 4
         };
-        const RENDER_ORDER = [ LAYER.FILL, LAYER.COLOR, LAYER.SHADE, LAYER.LINE ];
-        const LAYERS_COUNT = 4;
+        const MAIN_LAYERS = [ LAYER.FILL, LAYER.COLOR, LAYER.SHADE, LAYER.LINE, LAYER.SKETCH ];
+        const DEFAULT_MAIN_LAYER_ORDER = [ LAYER.FILL, LAYER.COLOR, LAYER.SHADE, LAYER.LINE, LAYER.SKETCH ];
+        const LAYERS_COUNT = 5;
         const PAPER_LAYER = -1;
+        let mainLayerOrder = DEFAULT_MAIN_LAYER_ORDER.slice();
+        function normalizeMainLayerOrder(order) {
+            if (!Array.isArray(order)) return DEFAULT_MAIN_LAYER_ORDER.slice();
+            const seen = new Set;
+            const out = [];
+            for (const raw of order) {
+                const n = Number(raw);
+                if (!Number.isFinite(n)) continue;
+                if (!MAIN_LAYERS.includes(n)) continue;
+                if (seen.has(n)) continue;
+                seen.add(n);
+                out.push(n);
+            }
+            for (const L of DEFAULT_MAIN_LAYER_ORDER) {
+                if (!seen.has(L)) out.push(L);
+            }
+            return out;
+        }
+        function mainLayersTopToBottom() {
+            return mainLayerOrder.slice().reverse();
+        }
         let layers = new Array(LAYERS_COUNT).fill(0).map(() => ({
             name: "",
             opacity: 1,
             prevOpacity: 1,
-            clipToBelow: false,
             frames: new Array(totalFrames).fill(null),
             sublayers: new Map,
             suborder: []
@@ -617,6 +762,7 @@
         layers[LAYER.LINE].name = "LINE";
         layers[LAYER.SHADE].name = "SHADE";
         layers[LAYER.COLOR].name = "COLOR";
+        layers[LAYER.SKETCH].name = "SKETCH";
         layers[LAYER.FILL].name = "FILL";
         let activeLayer = LAYER.LINE;
         let activeSubColor = new Array(LAYERS_COUNT).fill("#000000");
@@ -1506,52 +1652,19 @@
             return mainLayerHasContent(L, F);
         }
         function hasCel(F) {
-            return mainLayerHasContent(LAYER.LINE, F) || mainLayerHasContent(LAYER.SHADE, F) || mainLayerHasContent(LAYER.COLOR, F) || mainLayerHasContent(LAYER.FILL, F);
+            return MAIN_LAYERS.some(L => mainLayerHasContent(L, F));
         }
         function drawExactCel(ctx, idx) {
-            ensureClipBuffers(contentW, contentH);
-            for (const L of RENDER_ORDER) {
+            for (const L of mainLayerOrder) {
                 const layer = layers[L];
                 if (!layer) continue;
                 const op = layer.opacity ?? 1;
                 if (op <= 0) continue;
                 const srcCanvases = canvasesWithContentForMainLayerFrame(L, idx);
                 if (!srcCanvases.length) continue;
-                const wantsClip = !!layer.clipToBelow && isClipEligibleMainLayer(layer.name);
-                const belowL = Number(L) - 1;
-                if (!wantsClip || L === LAYER.FILL || belowL < 0 || !layers?.[belowL]) {
-                    ctx.save();
-                    ctx.globalAlpha *= op;
-                    for (const off of srcCanvases) ctx.drawImage(off, 0, 0);
-                    ctx.restore();
-                    continue;
-                }
-                const belowLayer = layers[belowL];
-                const belowOp = belowLayer?.opacity ?? 0;
-                if (belowOp <= 0) {
-                    continue;
-                }
-                const maskCanvases = canvasesWithContentForMainLayerFrame(belowL, idx);
-                if (!maskCanvases.length) {
-                    continue;
-                }
-                _clipWorkCtx.setTransform(1, 0, 0, 1, 0, 0);
-                _clipWorkCtx.globalCompositeOperation = "source-over";
-                _clipWorkCtx.globalAlpha = 1;
-                _clipWorkCtx.clearRect(0, 0, contentW, contentH);
-                for (const off of srcCanvases) _clipWorkCtx.drawImage(off, 0, 0);
-                _clipMaskCtx.setTransform(1, 0, 0, 1, 0, 0);
-                _clipMaskCtx.globalCompositeOperation = "source-over";
-                _clipMaskCtx.clearRect(0, 0, contentW, contentH);
-                _clipMaskCtx.globalAlpha = belowOp;
-                for (const off of maskCanvases) _clipMaskCtx.drawImage(off, 0, 0);
-                _clipMaskCtx.globalAlpha = 1;
-                _clipWorkCtx.globalCompositeOperation = "destination-in";
-                _clipWorkCtx.drawImage(_clipMask, 0, 0);
-                _clipWorkCtx.globalCompositeOperation = "source-over";
                 ctx.save();
                 ctx.globalAlpha *= op;
-                ctx.drawImage(_clipWork, 0, 0);
+                for (const off of srcCanvases) ctx.drawImage(off, 0, 0);
                 ctx.restore();
             }
         }
@@ -1622,13 +1735,39 @@
         }
         function swatchContainerIdForLayer(L) {
             if (L === PAPER_LAYER) return "swatches-paper";
+            if (L === LAYER.SKETCH) return "swatches-sketch";
             if (L === LAYER.LINE) return "swatches-line";
             if (L === LAYER.SHADE) return "swatches-shade";
             if (L === LAYER.COLOR) return "swatches-color";
             return "swatches-fill";
         }
+        function layerRadioIdForLayer(L) {
+            if (L === PAPER_LAYER) return "bt-paper";
+            if (L === LAYER.SKETCH) return "bt-sketch-layer";
+            if (L === LAYER.LINE) return "bt-line";
+            if (L === LAYER.SHADE) return "bt-color";
+            if (L === LAYER.COLOR) return "bt-sketch";
+            return "bt-fill";
+        }
+        function layerValueForLayer(L) {
+            if (L === PAPER_LAYER) return "paper";
+            if (L === LAYER.SKETCH) return "sketch";
+            if (L === LAYER.LINE) return "line";
+            if (L === LAYER.SHADE) return "shade";
+            if (L === LAYER.COLOR) return "color";
+            return "fill";
+        }
+        function layerFromValue(val) {
+            if (val === "paper") return PAPER_LAYER;
+            if (val === "sketch") return LAYER.SKETCH;
+            if (val === "line") return LAYER.LINE;
+            if (val === "shade") return LAYER.SHADE;
+            if (val === "color") return LAYER.COLOR;
+            if (val === "fill") return LAYER.FILL;
+            return LAYER.LINE;
+        }
         function setLayerRadioChecked(L) {
-            const id = L === PAPER_LAYER ? "bt-paper" : L === LAYER.LINE ? "bt-line" : L === LAYER.SHADE ? "bt-color" : L === LAYER.COLOR ? "bt-sketch" : "bt-fill";
+            const id = layerRadioIdForLayer(L);
             const r = document.getElementById(id);
             if (r) r.checked = true;
         }
@@ -1664,6 +1803,7 @@
         let _swatchPtrDrag = null;
         function _swatchHostLayer(host) {
             const id = host?.id || "";
+            if (id === "swatches-sketch") return LAYER.SKETCH;
             if (id === "swatches-line") return LAYER.LINE;
             if (id === "swatches-shade") return LAYER.SHADE;
             if (id === "swatches-color") return LAYER.COLOR;
@@ -2191,7 +2331,7 @@
                 const n = Number(onlyLayer);
                 if (Number.isFinite(n)) onlyLayer = n;
             }
-            const todo = onlyLayer === null ? [ LAYER.FILL, LAYER.COLOR, LAYER.SHADE, LAYER.LINE ] : [ onlyLayer ];
+            const todo = onlyLayer === null ? mainLayerOrder.slice() : [ onlyLayer ];
             for (const L of todo) {
                 const host = document.getElementById(swatchContainerIdForLayer(L));
                 if (!host) continue;
@@ -2911,7 +3051,7 @@
             const m = document.createElement("div");
             m.id = "layerRowMenu";
             m.hidden = true;
-            m.innerHTML = `\n        <button type="button" class="lrm-btn" data-act="opacity">Opacity…</button>\n        <button type="button" class="lrm-btn lrm-clip" data-act="clip">\n          <span class="lrm-chk" aria-hidden="true">☐</span>\n          <span class="lrm-txt">Clip to layer below</span>\n        </button>\n      `;
+            m.innerHTML = `\n        <button type="button" class="lrm-btn" data-act="opacity">Opacity…</button>\n      `;
             m.addEventListener("click", e => {
                 const b = e.target.closest("button[data-act]");
                 if (!b) return;
@@ -2922,17 +3062,6 @@
                 const L = st.L;
                 if (act === "opacity") {
                     openLayerOpacityMenu(L, st.anchorEvLike);
-                    return;
-                }
-                if (act === "clip") {
-                    if (L === PAPER_LAYER) return;
-                    if (!layers?.[L]) return;
-                    if (!isClipEligibleMainLayer(layers[L]?.name)) return;
-                    layers[L].clipToBelow = !layers[L].clipToBelow;
-                    try {
-                        updateLayerClipBadge(L);
-                    } catch {}
-                    renderAll();
                     return;
                 }
             });
@@ -2961,19 +3090,6 @@
                 L: L,
                 anchorEvLike: anchorEvLike
             };
-            const clipBtn = m.querySelector('button[data-act="clip"]');
-            const chk = clipBtn?.querySelector(".lrm-chk");
-            const eligible = isClipEligibleMainLayer(layers[L]?.name);
-            if (clipBtn) {
-                clipBtn.hidden = !eligible;
-                if (eligible) {
-                    const on = !!layers[L].clipToBelow;
-                    if (chk) chk.textContent = on ? "☑" : "☐";
-                    const hasBelow = Number(L) > Number(LAYER.FILL);
-                    clipBtn.disabled = !hasBelow;
-                    clipBtn.title = hasBelow ? "Clip this layer to the alpha of the layer below" : "No layer below to clip to";
-                }
-            }
             m.hidden = false;
             m.style.left = "0px";
             m.style.top = "0px";
@@ -2990,14 +3106,6 @@
         function closeLayerRowMenu() {
             if (_layerRowMenu) _layerRowMenu.hidden = true;
             _layerRowState = null;
-        }
-        function updateLayerClipBadge(L) {
-            const label = document.querySelector(`[data-layer-row="${String(L)}"]`);
-            if (!label) return;
-            const on = !!layers?.[L]?.clipToBelow;
-            label.classList.toggle("isClippedToBelow", on);
-            const badge = label.querySelector(".clipBadge");
-            if (badge) badge.hidden = !on;
         }
         let _brushCtxMenu = null;
         let _brushCtxState = null;
@@ -3406,7 +3514,7 @@
                     localStorage.removeItem(ISLAND_POS_KEY);
                 } catch {}
                 island.style.left = "18px";
-                island.style.top = "76px";
+                island.style.top = "calc(var(--header-h) + 28px)";
             });
         }
         function wireIslandIcons(toolSegEl) {
@@ -3429,6 +3537,7 @@
             }
         }
         const visBtnByLayer = new Map;
+        const layerMoveCtrlsByLayer = new Map;
         function layerIsHidden(L) {
             if (L === PAPER_LAYER) return false;
             return (layers[L]?.opacity ?? 1) <= 0;
@@ -3442,6 +3551,88 @@
             btn.title = hidden ? "Show layer" : "Hide layer";
             btn.setAttribute("aria-pressed", hidden ? "true" : "false");
         }
+        function getLayerRowElements(L) {
+            const id = layerRadioIdForLayer(L);
+            const input = document.getElementById(id);
+            const label = input ? input.closest("label") || document.querySelector(`label[for="${id}"]`) || input.parentElement : null;
+            return {
+                input: input,
+                label: label
+            };
+        }
+        function applyLayerSegOrder() {
+            const seg = document.getElementById("layerSeg");
+            if (!seg) return;
+            const topToBottom = mainLayersTopToBottom();
+            const ordered = topToBottom.concat(PAPER_LAYER);
+            for (const L of ordered) {
+                const row = getLayerRowElements(L);
+                if (!row?.input || !row?.label) continue;
+                seg.appendChild(row.input);
+                seg.appendChild(row.label);
+            }
+        }
+        function moveLayerInList(L, dir) {
+            if (L === PAPER_LAYER) return;
+            const ui = mainLayersTopToBottom();
+            const idx = ui.indexOf(L);
+            if (idx < 0) return;
+            const next = idx + dir;
+            if (next < 0 || next >= ui.length) return;
+            [ ui[idx], ui[next] ] = [ ui[next], ui[idx] ];
+            mainLayerOrder = normalizeMainLayerOrder(ui.slice().reverse());
+            applyLayerSegOrder();
+            wireLayerVisButtons();
+            renderAll();
+            markProjectDirty();
+        }
+        function updateLayerMoveButtons() {
+            const ui = mainLayersTopToBottom();
+            for (let i = 0; i < ui.length; i++) {
+                const L = ui[i];
+                const refs = layerMoveCtrlsByLayer.get(L);
+                if (!refs) continue;
+                refs.up.disabled = i === 0;
+                refs.down.disabled = i === ui.length - 1;
+                refs.up.title = refs.up.disabled ? "Already at top" : "Move layer up";
+                refs.down.title = refs.down.disabled ? "Already at bottom" : "Move layer down";
+            }
+        }
+        function ensureLayerMoveControls(label, L) {
+            if (!label || L === PAPER_LAYER) return;
+            const existing = label.querySelector(".layerMoveControls");
+            if (existing) return;
+            const wrap = document.createElement("span");
+            wrap.className = "layerMoveControls";
+            const up = document.createElement("button");
+            up.type = "button";
+            up.className = "layerMoveBtn";
+            up.textContent = "▲";
+            up.setAttribute("aria-label", "Move layer up");
+            up.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                moveLayerInList(L, -1);
+            });
+            const down = document.createElement("button");
+            down.type = "button";
+            down.className = "layerMoveBtn";
+            down.textContent = "▼";
+            down.setAttribute("aria-label", "Move layer down");
+            down.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                moveLayerInList(L, 1);
+            });
+            wrap.appendChild(up);
+            wrap.appendChild(down);
+            const sw = label.querySelector(".layerSwatches");
+            if (sw) label.insertBefore(wrap, sw); else label.appendChild(wrap);
+            layerMoveCtrlsByLayer.set(L, {
+                up: up,
+                down: down
+            });
+        }
         function injectVisBtn(radioId, L) {
             const input = document.getElementById(radioId);
             if (!input) return;
@@ -3449,6 +3640,8 @@
             if (!label) return;
             const existing = label.querySelector(".visBtn");
             if (existing) {
+                label.dataset.layerRow = String(L);
+                ensureLayerMoveControls(label, L);
                 visBtnByLayer.set(L, existing);
                 updateVisBtn(L);
                 return;
@@ -3467,20 +3660,7 @@
             });
             label.insertBefore(btn, label.firstChild);
             label.dataset.layerRow = String(L);
-            if (isClipEligibleMainLayer(layers?.[L]?.name)) {
-                let badge = label.querySelector(".clipBadge");
-                if (!badge) {
-                    badge = document.createElement("span");
-                    badge.className = "clipBadge";
-                    badge.textContent = "⛓";
-                    badge.title = "Clipped to layer below";
-                    badge.hidden = true;
-                    label.insertBefore(badge, btn.nextSibling);
-                }
-                try {
-                    updateLayerClipBadge(L);
-                } catch {}
-            }
+            ensureLayerMoveControls(label, L);
             if (!label._opacityCtxWired) {
                 label._opacityCtxWired = true;
                 label.addEventListener("contextmenu", e => {
@@ -3495,20 +3675,19 @@
             updateVisBtn(L);
         }
         function wireLayerVisButtons() {
+            applyLayerSegOrder();
             injectVisBtn("bt-paper", PAPER_LAYER);
             injectVisBtn("bt-fill", LAYER.FILL);
             injectVisBtn("bt-sketch", LAYER.COLOR);
             injectVisBtn("bt-color", LAYER.SHADE);
             injectVisBtn("bt-line", LAYER.LINE);
+            injectVisBtn("bt-sketch-layer", LAYER.SKETCH);
             updateVisBtn(LAYER.FILL);
             updateVisBtn(LAYER.COLOR);
             updateVisBtn(LAYER.SHADE);
             updateVisBtn(LAYER.LINE);
-            try {
-                updateLayerClipBadge(LAYER.COLOR);
-                updateLayerClipBadge(LAYER.SHADE);
-                updateLayerClipBadge(LAYER.LINE);
-            } catch {}
+            updateVisBtn(LAYER.SKETCH);
+            updateLayerMoveButtons();
         }
         function clearCelAt(L, F) {
             if (L === PAPER_LAYER) return;
@@ -3595,6 +3774,110 @@
                 clearAllConfirmBtn.addEventListener("click", onConfirm);
                 clearAllCancelBtn.addEventListener("click", onCancel);
                 clearAllModalBackdrop.addEventListener("click", onCancel);
+                document.addEventListener("keydown", onEsc);
+            });
+        }
+        function askImgSeqExportOptions() {
+            return new Promise(resolve => {
+                if (!exportImgSeqModal || !exportImgSeqModalBackdrop || !exportImgSeqConfirmBtn || !exportImgSeqCancelBtn) {
+                    resolve({
+                        transparent: false
+                    });
+                    return;
+                }
+                exportImgSeqModal.hidden = false;
+                exportImgSeqModalBackdrop.hidden = false;
+                const cleanup = value => {
+                    exportImgSeqModal.hidden = true;
+                    exportImgSeqModalBackdrop.hidden = true;
+                    exportImgSeqConfirmBtn.removeEventListener("click", onConfirm);
+                    exportImgSeqCancelBtn.removeEventListener("click", onCancel);
+                    exportImgSeqModalBackdrop.removeEventListener("click", onCancel);
+                    document.removeEventListener("keydown", onEsc);
+                    resolve(value);
+                };
+                const onConfirm = () => cleanup({
+                    transparent: !!exportImgSeqTransparencyToggle?.checked
+                });
+                const onCancel = () => cleanup(null);
+                const onEsc = e => {
+                    if (e.key === "Escape") cleanup(null);
+                };
+                exportImgSeqConfirmBtn.addEventListener("click", onConfirm);
+                exportImgSeqCancelBtn.addEventListener("click", onCancel);
+                exportImgSeqModalBackdrop.addEventListener("click", onCancel);
+                document.addEventListener("keydown", onEsc);
+            });
+        }
+        function askGifExportOptions() {
+            return new Promise(resolve => {
+                if (!exportGifModal || !exportGifModalBackdrop || !exportGifConfirmBtn || !exportGifCancelBtn) {
+                    resolve({
+                        fps: Math.max(1, Math.min(60, fps || 12)),
+                        transparent: false,
+                        loop: true
+                    });
+                    return;
+                }
+                safeSetValue(exportGifFpsInput, Math.max(1, Math.min(60, fps || 12)));
+                exportGifModal.hidden = false;
+                exportGifModalBackdrop.hidden = false;
+                const cleanup = value => {
+                    exportGifModal.hidden = true;
+                    exportGifModalBackdrop.hidden = true;
+                    exportGifConfirmBtn.removeEventListener("click", onConfirm);
+                    exportGifCancelBtn.removeEventListener("click", onCancel);
+                    exportGifModalBackdrop.removeEventListener("click", onCancel);
+                    document.removeEventListener("keydown", onEsc);
+                    resolve(value);
+                };
+                const onConfirm = () => {
+                    const f = Math.max(1, Math.min(60, parseInt(exportGifFpsInput?.value, 10) || fps || 12));
+                    cleanup({
+                        fps: f,
+                        transparent: !!exportGifTransparencyToggle?.checked,
+                        loop: !!exportGifLoopToggle?.checked
+                    });
+                };
+                const onCancel = () => cleanup(null);
+                const onEsc = e => {
+                    if (e.key === "Escape") cleanup(null);
+                };
+                exportGifConfirmBtn.addEventListener("click", onConfirm);
+                exportGifCancelBtn.addEventListener("click", onCancel);
+                exportGifModalBackdrop.addEventListener("click", onCancel);
+                document.addEventListener("keydown", onEsc);
+            });
+        }
+        function askAutosaveIntervalOptions() {
+            return new Promise(resolve => {
+                if (!autosaveIntervalModal || !autosaveIntervalModalBackdrop || !autosaveIntervalConfirmBtn || !autosaveIntervalCancelBtn) {
+                    resolve(null);
+                    return;
+                }
+                safeSetValue(autosaveIntervalMinutesInput, autosaveIntervalMinutes);
+                autosaveIntervalModal.hidden = false;
+                autosaveIntervalModalBackdrop.hidden = false;
+                const cleanup = value => {
+                    autosaveIntervalModal.hidden = true;
+                    autosaveIntervalModalBackdrop.hidden = true;
+                    autosaveIntervalConfirmBtn.removeEventListener("click", onConfirm);
+                    autosaveIntervalCancelBtn.removeEventListener("click", onCancel);
+                    autosaveIntervalModalBackdrop.removeEventListener("click", onCancel);
+                    document.removeEventListener("keydown", onEsc);
+                    resolve(value);
+                };
+                const onConfirm = () => {
+                    const mins = clamp(parseInt(autosaveIntervalMinutesInput?.value, 10) || autosaveIntervalMinutes || 1, 1, 120);
+                    cleanup(mins);
+                };
+                const onCancel = () => cleanup(null);
+                const onEsc = e => {
+                    if (e.key === "Escape") cleanup(null);
+                };
+                autosaveIntervalConfirmBtn.addEventListener("click", onConfirm);
+                autosaveIntervalCancelBtn.addEventListener("click", onCancel);
+                autosaveIntervalModalBackdrop.addEventListener("click", onCancel);
                 document.addEventListener("keydown", onEsc);
             });
         }
@@ -4488,7 +4771,7 @@
                 }
                 return out;
             }
-            const layersToErase = layer === -1 ? [ LAYER.FILL, LAYER.COLOR, LAYER.SHADE, LAYER.LINE ] : [ layer ];
+            const layersToErase = layer === -1 ? MAIN_LAYERS.slice() : [ layer ];
             let didAny = false;
             const qx = new Uint32Array(w * h);
             const qy = new Uint32Array(w * h);
@@ -7342,15 +7625,7 @@
             return null;
         }
         function initImgSeqExportWiring() {
-            if (!exportImgSeqBtn) {
-                console.warn("[celstomp] exportImgSeqBtn not found (id exportImgSeqBtn/exportImgSeq).");
-                return;
-            }
-            if (!imgSeqExporter) {
-                console.warn("[celstomp] IMG sequence exporter module missing.");
-                return;
-            }
-            imgSeqExporter.wire(exportImgSeqBtn);
+            return;
         }
         async function onExportImgSeqClick(e) {
             e.preventDefault();
@@ -7712,6 +7987,101 @@
             a.remove();
             URL.revokeObjectURL(url);
         }
+        function buildGifPalette() {
+            const out = [ 0x000000 ];
+            for (let r = 0; r < 6; r++) {
+                for (let g = 0; g < 6; g++) {
+                    for (let b = 0; b < 6; b++) {
+                        out.push(r * 51 << 16 | g * 51 << 8 | b * 51);
+                    }
+                }
+            }
+            for (let i = 0; out.length < 256; i++) {
+                const v = Math.round(i / 39 * 255);
+                out.push(v << 16 | v << 8 | v);
+            }
+            return out;
+        }
+        function rgbaToGifIndex(r, g, b) {
+            const ri = Math.max(0, Math.min(5, Math.round(r / 51)));
+            const gi = Math.max(0, Math.min(5, Math.round(g / 51)));
+            const bi = Math.max(0, Math.min(5, Math.round(b / 51)));
+            return 1 + ri * 36 + gi * 6 + bi;
+        }
+        function imageDataToGifIndexes(data, transparent) {
+            const out = new Uint8Array(data.length / 4);
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                const a = data[i + 3];
+                if (transparent && a < 16) {
+                    out[p] = 0;
+                    continue;
+                }
+                out[p] = rgbaToGifIndex(data[i], data[i + 1], data[i + 2]);
+            }
+            return out;
+        }
+        async function exportGif({fps: fpsLocal, transparent: transparent, loop: loop}) {
+            if (typeof GifWriter !== "function") {
+                alert("GIF export unavailable: encoder library not loaded.");
+                return;
+            }
+            const start = clipStart;
+            const end = clipEnd;
+            const count = Math.max(0, end - start + 1);
+            if (!count) {
+                alert("No frames to export.");
+                return;
+            }
+            const totalPixels = contentW * contentH * count;
+            if (totalPixels > 4e7) {
+                alert("GIF export range is too large. Shorten clip range or canvas size.");
+                return;
+            }
+            const delayCs = Math.max(1, Math.round(100 / Math.max(1, fpsLocal || fps || 12)));
+            const estSize = Math.max(1048576, Math.ceil(totalPixels * 1.4 + count * 256));
+            const out = new Uint8Array(estSize);
+            const palette = buildGifPalette();
+            const writer = new GifWriter(out, contentW, contentH, {
+                palette: palette,
+                loop: loop ? 0 : null
+            });
+            const cc = document.createElement("canvas");
+            cc.width = contentW;
+            cc.height = contentH;
+            const cctx = cc.getContext("2d", {
+                willReadFrequently: true,
+                alpha: true
+            });
+            cctx.imageSmoothingEnabled = !!antiAlias;
+            await withExportOverridesAsync(async () => {
+                for (let i = start; i <= end; i++) {
+                    await sleep(0);
+                    await drawFrameTo(cctx, i, {
+                        forceHoldOff: true,
+                        transparent: transparent
+                    });
+                    const img = cctx.getImageData(0, 0, contentW, contentH);
+                    const indexed = imageDataToGifIndexes(img.data, transparent);
+                    writer.addFrame(0, 0, contentW, contentH, indexed, {
+                        delay: delayCs,
+                        disposal: 1,
+                        transparent: transparent ? 0 : null
+                    });
+                }
+            });
+            const len = writer.end();
+            const blob = new Blob([ out.slice(0, len) ], {
+                type: "image/gif"
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `celstomp_clip_${fpsLocal}fps_${framesToSF(start).s}-${framesToSF(end).s}.gif`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
         function padNum(n, w = 4) {
             const s = String(n);
             return s.length >= w ? s : "0".repeat(w - s.length) + s;
@@ -7930,10 +8300,40 @@
             }
             return out;
         }
+        const AUTOSAVE_ENABLED_KEY = "celstomp.autosave.enabled.v1";
+        const AUTOSAVE_INTERVAL_MIN_KEY = "celstomp.autosave.interval.min.v1";
+        function readAutosaveEnabledSetting() {
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_ENABLED_KEY);
+                if (raw === "1" || raw === "true") return true;
+                if (raw === "0" || raw === "false") return false;
+            } catch {}
+            return false;
+        }
+        function readAutosaveIntervalMinutesSetting() {
+            try {
+                const raw = Number(localStorage.getItem(AUTOSAVE_INTERVAL_MIN_KEY) || 1);
+                if (Number.isFinite(raw)) return clamp(Math.round(raw), 1, 120);
+            } catch {}
+            return 1;
+        }
+        function writeAutosaveEnabledSetting(v) {
+            try {
+                localStorage.setItem(AUTOSAVE_ENABLED_KEY, v ? "1" : "0");
+            } catch {}
+        }
+        function writeAutosaveIntervalMinutesSetting(v) {
+            try {
+                localStorage.setItem(AUTOSAVE_INTERVAL_MIN_KEY, String(clamp(Math.round(v), 1, 120)));
+            } catch {}
+        }
+        let autosaveEnabled = readAutosaveEnabledSetting();
+        let autosaveIntervalMinutes = readAutosaveIntervalMinutesSetting();
         const autosaveController = window.CelstompAutosave?.createController?.({
             autosaveKey: "celstomp.project.autosave.v1",
             manualSaveMetaKey: "celstomp.project.manualsave.v1",
-            intervalMs: 45000,
+            enabled: autosaveEnabled,
+            intervalMs: autosaveIntervalMinutes * 60000,
             badgeEl: saveStateBadgeEl,
             buildSnapshot: async () => await buildProjectSnapshot(),
             pointerSelectors: [ "#drawCanvas", "#fillCurrent", "#fillAll", "#tlDupCel", "#toolSeg label", "#layerSeg .layerRow", "#timelineTable td" ],
@@ -7947,6 +8347,24 @@
                 });
             }
         }) || null;
+        function syncAutosaveUiState() {
+            const enabled = autosaveController?.isEnabled?.() ?? autosaveEnabled;
+            const minutes = Math.max(1, Math.round((autosaveController?.getIntervalMs?.() ?? autosaveIntervalMinutes * 60000) / 60000));
+            autosaveEnabled = !!enabled;
+            autosaveIntervalMinutes = minutes;
+            if (toggleAutosaveBtn) {
+                toggleAutosaveBtn.textContent = autosaveEnabled ? "Disable Autosave" : "Enable Autosave";
+                toggleAutosaveBtn.setAttribute("aria-pressed", autosaveEnabled ? "true" : "false");
+            }
+            if (autosaveIntervalBtn) {
+                autosaveIntervalBtn.textContent = `Autosave Interval (${autosaveIntervalMinutes} min)`;
+            }
+            if (!autosaveEnabled) {
+                setSaveStateBadge("Autosave Off", "");
+            }
+            writeAutosaveEnabledSetting(autosaveEnabled);
+            writeAutosaveIntervalMinutesSetting(autosaveIntervalMinutes);
+        }
         function setSaveStateBadge(text, tone = "") {
             if (autosaveController) {
                 autosaveController.setBadge(text, tone);
@@ -7996,7 +8414,6 @@
                 const lay = layers?.[li];
                 const opacity = typeof lay?.opacity === "number" ? clamp(lay.opacity, 0, 1) : 1;
                 const name = String(lay?.name || "");
-                const clipToBelow = !!lay?.clipToBelow;
                 const suborder = Array.isArray(lay?.suborder) ? lay.suborder.slice() : [];
                 const keySet = new Set(suborder);
                 if (lay?.sublayers && typeof lay.sublayers.keys === "function") {
@@ -8038,7 +8455,6 @@
                 outLayers.push({
                     name: name,
                     opacity: opacity,
-                    clipToBelow: clipToBelow,
                     suborder: uniqStable(keys),
                     sublayers: outSubs
                 });
@@ -8069,6 +8485,7 @@
                 playSnapped: playSnapped,
                 keepOnionWhilePlaying: keepOnionWhilePlaying,
                 keepTransWhilePlaying: keepTransWhilePlaying,
+                mainLayerOrder: mainLayerOrder.slice(),
                 layerColors: Array.isArray(layerColorMem) ? layerColorMem.slice() : [],
                 activeLayer: activeLayer,
                 activeSubColor: Array.isArray(activeSubColor) ? activeSubColor.slice() : activeSubColor,
@@ -8139,6 +8556,7 @@
                     playSnapped = !!data.playSnapped;
                     keepOnionWhilePlaying = !!data.keepOnionWhilePlaying;
                     keepTransWhilePlaying = !!data.keepTransWhilePlaying;
+                    mainLayerOrder = normalizeMainLayerOrder(data.mainLayerOrder);
                     if (data.oklchDefault && typeof data.oklchDefault === "object") {
                         const L = clamp(parseFloat(data.oklchDefault.L) || 0, 0, 100);
                         const C = clamp(parseFloat(data.oklchDefault.C) || 0, 0, 1);
@@ -8166,7 +8584,6 @@
                         name: "",
                         opacity: 1,
                         prevOpacity: 1,
-                        clipToBelow: false,
                         frames: new Array(totalFrames).fill(null),
                         suborder: [],
                         sublayers: new Map
@@ -8174,6 +8591,7 @@
                     layers[LAYER.LINE].name = "LINE";
                     layers[LAYER.SHADE].name = "SHADE";
                     layers[LAYER.COLOR].name = "COLOR";
+                    layers[LAYER.SKETCH].name = "SKETCH";
                     layers[LAYER.FILL].name = "FILL";
                     try {
                         if (hasTimeline && typeof buildTimeline === "function") buildTimeline();
@@ -8222,7 +8640,6 @@
                         if (!lay || !src) continue;
                         lay.opacity = typeof src.opacity === "number" ? clamp(src.opacity, 0, 1) : 1;
                         lay.prevOpacity = lay.opacity;
-                        if ("clipToBelow" in src) lay.clipToBelow = !!src.clipToBelow;
                         if (typeof src.name === "string" && src.name.trim()) lay.name = src.name.trim();
                         if (src.sublayers && typeof src.sublayers === "object") {
                             const subsObj = src.sublayers;
@@ -8292,6 +8709,9 @@
                     } catch {}
                     try {
                         for (let L = 0; L < LAYERS_COUNT; L++) renderLayerSwatches?.(L);
+                    } catch {}
+                    try {
+                        wireLayerVisButtons?.();
                     } catch {}
                     try {
                         renderAll?.();
@@ -9225,10 +9645,7 @@
             handle.addEventListener("pointercancel", end);
         }
         wireIslandResize();
-        infoBtn?.addEventListener("click", () => {
-            if (!infoPanel) return;
-            infoPanel.style.display = infoPanel.style.display === "block" ? "none" : "block";
-        });
+        wireTopMenus();
         const layerSeg = $("layerSeg");
         layerSeg?.addEventListener("change", () => {
             wireLayerVisButtons();
@@ -9240,7 +9657,7 @@
                 updateHUD();
                 return;
             }
-            activeLayer = val === "shade" ? LAYER.SHADE : val === "color" ? LAYER.COLOR : val === "fill" ? LAYER.FILL : LAYER.LINE;
+            activeLayer = layerFromValue(val);
             const hex = activeSubColor[activeLayer] || "#000000";
             currentColor = hex;
             try {
@@ -9458,7 +9875,59 @@
             }
             await exportClip(mime, "mp4");
         });
-        initImgSeqExportWiring();
+        exportImgSeqBtn?.addEventListener("click", async e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!imgSeqExporter?.handleClick) {
+                alert("IMG sequence exporter is unavailable.");
+                return;
+            }
+            const options = await askImgSeqExportOptions();
+            if (!options) return;
+            await imgSeqExporter.handleClick({
+                preventDefault: () => {},
+                stopPropagation: () => {},
+                altKey: !!options.transparent,
+                shiftKey: false
+            }, exportImgSeqBtn);
+        });
+        exportGIFBtn?.addEventListener("click", async e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const options = await askGifExportOptions();
+            if (!options) return;
+            const oldTxt = exportGIFBtn.textContent;
+            exportGIFBtn.disabled = true;
+            exportGIFBtn.textContent = "Exporting...";
+            try {
+                await exportGif(options);
+            } catch (err) {
+                alert("GIF export failed: " + (err?.message || err));
+            } finally {
+                exportGIFBtn.disabled = false;
+                exportGIFBtn.textContent = oldTxt;
+            }
+        });
+        toggleAutosaveBtn?.addEventListener("click", e => {
+            e.preventDefault();
+            e.stopPropagation();
+            autosaveEnabled = !autosaveEnabled;
+            autosaveController?.setEnabled?.(autosaveEnabled);
+            if (autosaveEnabled) {
+                autosaveController?.markClean?.("Autosave On");
+            }
+            syncAutosaveUiState();
+            updateRestoreAutosaveButton();
+        });
+        autosaveIntervalBtn?.addEventListener("click", async e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const minutes = await askAutosaveIntervalOptions();
+            if (!minutes) return;
+            autosaveIntervalMinutes = clamp(Number(minutes) || autosaveIntervalMinutes || 1, 1, 120);
+            autosaveController?.setIntervalMs?.(autosaveIntervalMinutes * 60000);
+            syncAutosaveUiState();
+        });
         function initSaveLoadWiring() {
             if (window.__CELSTOMP_SAVELOAD_WIRED__) return;
             window.__CELSTOMP_SAVELOAD_WIRED__ = true;
@@ -9493,10 +9962,11 @@
                     source: "file"
                 });
             });
-            setSaveStateBadge("Saved");
+            if (autosaveEnabled) setSaveStateBadge("Saved");
             wireAutosaveDirtyTracking();
             updateRestoreAutosaveButton();
-            window.setTimeout(maybePromptAutosaveRecovery, 0);
+            if (autosaveEnabled) window.setTimeout(maybePromptAutosaveRecovery, 0);
+            syncAutosaveUiState();
         }
         if (document.readyState === "loading") {
             window.addEventListener("DOMContentLoaded", initSaveLoadWiring, {

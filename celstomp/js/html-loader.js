@@ -11,6 +11,7 @@
 
     const appScripts = [
         './js/ui-components.js',
+        './js/omggif.js',
         './celstomp-imgseq.js',
         './celstomp-autosave.js',
         './celstomp-app.js'

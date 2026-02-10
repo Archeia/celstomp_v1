@@ -99,4 +99,45 @@ document.getElementById('part-modals').innerHTML = `
       <button id="clearAllConfirmBtn" type="button" class="danger">Clear</button>
     </div>
   </div>
+
+  <div id="exportImgSeqModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="exportImgSeqModal" class="modalCard" role="dialog" aria-modal="true" aria-labelledby="exportImgSeqModalTitle" hidden>
+    <h3 id="exportImgSeqModalTitle">Export Image Sequence</h3>
+    <p>PNG image sequence export settings.</p>
+    <label class="chip"><input id="exportImgSeqTransparency" type="checkbox" /> Enable transparency</label>
+    <div class="modalActions">
+      <button id="exportImgSeqCancelBtn" type="button">Cancel</button>
+      <button id="exportImgSeqConfirmBtn" type="button">Export</button>
+    </div>
+  </div>
+
+  <div id="exportGifModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="exportGifModal" class="modalCard" role="dialog" aria-modal="true" aria-labelledby="exportGifModalTitle" hidden>
+    <h3 id="exportGifModalTitle">Export GIF</h3>
+    <p>Animated GIF export settings.</p>
+    <label class="sideSelectRow" for="exportGifFps">
+      <span>FPS</span>
+      <input id="exportGifFps" type="number" min="1" max="60" step="1" value="12" inputmode="numeric" />
+    </label>
+    <label class="chip"><input id="exportGifTransparency" type="checkbox" /> Enable transparency</label>
+    <label class="chip"><input id="exportGifLoop" type="checkbox" checked /> Loop animation</label>
+    <div class="modalActions">
+      <button id="exportGifCancelBtn" type="button">Cancel</button>
+      <button id="exportGifConfirmBtn" type="button">Export</button>
+    </div>
+  </div>
+
+  <div id="autosaveIntervalModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="autosaveIntervalModal" class="modalCard" role="dialog" aria-modal="true" aria-labelledby="autosaveIntervalModalTitle" hidden>
+    <h3 id="autosaveIntervalModalTitle">Autosave Interval</h3>
+    <p>Set autosave interval in minutes.</p>
+    <label class="sideSelectRow" for="autosaveIntervalMinutesInput">
+      <span>Minutes</span>
+      <input id="autosaveIntervalMinutesInput" type="number" min="1" max="120" step="1" value="1" inputmode="numeric" />
+    </label>
+    <div class="modalActions">
+      <button id="autosaveIntervalCancelBtn" type="button">Cancel</button>
+      <button id="autosaveIntervalConfirmBtn" type="button">Apply</button>
+    </div>
+  </div>
 `;

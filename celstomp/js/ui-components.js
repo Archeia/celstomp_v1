@@ -39,6 +39,7 @@
     }
 
     const layers = [
+        { id: 'bt-sketch-layer', val: 'sketch', label: 'SKETCH', swatchId: 'swatches-sketch' },
         { id: 'bt-line', val: 'line', label: 'LINE', swatchId: 'swatches-line', checked: true },
         { id: 'bt-color', val: 'shade', label: 'SHADE', swatchId: 'swatches-shade' },
         { id: 'bt-sketch', val: 'color', label: 'COLOR', swatchId: 'swatches-color' },

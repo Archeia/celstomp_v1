@@ -1,6 +1,69 @@
 document.getElementById('part-header').innerHTML = `
   <header class="top">
-    <div class="topSlot left"></div>
+    <div class="topSlot left">
+      <div id="topMenuBar" class="topMenuBar" role="menubar" aria-label="Main menu">
+        <div class="topMenuWrap" data-menu="file">
+          <button id="menuFileBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuFilePanel">File</button>
+          <div id="menuFilePanel" class="topMenuPanel" role="menu" hidden>
+            <button id="saveProj" class="topMenuItem" type="button" role="menuitem">Save</button>
+            <button id="loadProj" class="topMenuItem" type="button" role="menuitem">Load</button>
+            <button id="restoreAutosave" class="topMenuItem" type="button" role="menuitem" title="Restore latest autosaved draft" disabled>Restore Draft</button>
+            <div class="topMenuSep" role="separator"></div>
+            <div class="topSubmenuWrap">
+              <button id="menuAutosaveBtn" class="topMenuItem topSubmenuTrigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-controls="menuAutosavePanel">Autosave</button>
+              <div id="menuAutosavePanel" class="topSubmenuPanel" role="menu" hidden>
+                <button id="toggleAutosaveBtn" class="topMenuItem" type="button" role="menuitem">Enable Autosave</button>
+                <button id="autosaveIntervalBtn" class="topMenuItem" type="button" role="menuitem">Autosave Interval...</button>
+              </div>
+            </div>
+            <div class="topMenuSep" role="separator"></div>
+            <div class="topSubmenuWrap">
+              <button id="menuExportBtn" class="topMenuItem topSubmenuTrigger" type="button" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-controls="menuExportPanel">Export</button>
+              <div id="menuExportPanel" class="topSubmenuPanel" role="menu" hidden>
+                <button id="exportMP4" class="topMenuItem" type="button" role="menuitem">Export MP4</button>
+                <button id="exportImgSeqBtn" class="topMenuItem" type="button" role="menuitem">Export Img Seq</button>
+                <button id="exportGIFBtn" class="topMenuItem" type="button" role="menuitem">Export GIF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="topMenuWrap" data-menu="edit">
+          <button id="menuEditBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuEditPanel">Edit</button>
+          <div id="menuEditPanel" class="topMenuPanel" role="menu" hidden>
+            <button id="clearAllBtn" class="topMenuItem danger" type="button" role="menuitem">Clear All</button>
+          </div>
+        </div>
+
+        <div class="topMenuWrap" data-menu="tool-behavior">
+          <button id="menuToolBehaviorBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuToolBehaviorPanel">Tool Behavior</button>
+          <div id="menuToolBehaviorPanel" class="topMenuPanel topMenuPanelWide" role="menu" hidden>
+            <label class="topMenuSelectRow" for="stabilizationLevel">
+              <span>Stabilization Level</span>
+              <select id="stabilizationLevel">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </label>
+            <div id="penControls" class="topMenuPenControls" hidden>
+              <label class="chip"><input id="pressureSize" type="checkbox" checked /> Pen pressure size</label>
+              <label class="chip"><input id="pressureOpacity" type="checkbox" /> Pen pressure opacity</label>
+              <label class="chip"><input id="pressureTilt" type="checkbox" /> Pen tilt/rotation</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="saveStateBadge" class="saveStateBadge saveStateChip" role="status" aria-live="polite">Saved</div>
+    </div>
 
     <div class="brand">
       <span class="brandIcon brandIconL" aria-hidden="true"></span>
@@ -30,32 +93,20 @@ document.getElementById('part-header').innerHTML = `
       </p>
 
       <div class="infoBtns">
-
-        <a class="infoLinkBtn" href="https://ko-fi.com/ginyoa" target="_blank" rel="noopener">Support me on Kofi!</a>
-        <a class="infoLinkBtn" href="https://instagram.com/ginyoagoldie" target="_blank" rel="noopener">Instagram</a>
-        <a class="infoLinkBtn" href="https://x.com/ginyoagoldie" target="_blank" rel="noopener">Twitter</a>
+        <a class="infoLinkBtn" href="https://github.com/ginyoa/celstomp_v1/" target="_blank" rel="noopener">GitHub Repository</a>
+        <a class="infoLinkBtn" href="https://ko-fi.com/ginyoa" target="_blank" rel="noopener">Support on Ko-fi</a>
+        <a class="infoLinkBtn" href="https://x.com/ginyoagoldie" target="_blank" rel="noopener">Follow Updates</a>
       </div>
 
       <hr class="infoHr" />
 
       <h3 class="infoH3">About Celstomp</h3>
       <ul class="infoList">
-
-
-        <li>This site is vibecoded (coded with the help of AI). I am by no means in any way a traditional programmer, I
-          had just wanted to make animation more accessible and intuitive!</li>
-
-
-        <li>Its limited to a simple pixel brush and a simple layer system</li>
-
-        <li>Shortcuts: 1, 2, 3, 4, 5, 6 for the Tools</li>
-        <li>Up/Down or Q/W for Prev/Next Cel</li>
-        <li>Left/Right or E/R for Prev/Next Frame</li>
-        <li>You can drag the colored squares in the layer to reorder the layering of it</li>
-
-
-
-        <li>Right click on some of the tools + onion skin to reveal more settings</li>
+        <li>Celstomp is being actively rewritten by collaborators to move away from AI-generated code and improve maintainability.</li>
+        <li>Current build supports layered cel animation with timeline tools, export options, and autosave controls.</li>
+        <li>Shortcuts: 1-8 tools, Q/W or Up/Down for cels, E/R or Left/Right for frames.</li>
+        <li>Right-click brush/eraser/onion controls to access additional settings.</li>
+        <li>Use the GitHub repository button above for roadmap, issues, and source updates.</li>
       </ul>
     </div>
   </aside>

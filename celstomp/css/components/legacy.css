@@ -116,18 +116,6 @@
 
 #colorDock{ display:none; }
 
-/* Clip Badge */
-.clipBadge{
-  margin-left: 6px;
-  margin-right: 6px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-label.isClippedToBelow .clipBadge{
-  opacity: 1;
-}
-
-
 /* Brush Cursor */
 #brushCursorPreview{
   position: fixed;          
