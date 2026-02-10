@@ -7,7 +7,6 @@ document.getElementById('part-sidepanel').innerHTML = `
         <button id="loadProj">Load</button>
         <button id="restoreAutosave" title="Restore latest autosaved draft" disabled>Restore Draft</button>
         <div id="saveStateBadge" class="saveStateBadge" role="status" aria-live="polite">Saved</div>
-        <button id="addPaletteColor">Add Color</button>
         <button id="fillCurrent">Fill current cel</button>
         <button id="fillAll">Fill all cels</button>
         <button id="clearAllBtn" type="button" class="danger">Clear All</button>
@@ -56,7 +55,8 @@ document.getElementById('part-sidepanel').innerHTML = `
         <button id="exportImgSeqBtn" class="button">Export Img Seq </button>
 
         <div class="paletteControls">
-          <button id="newPaletteBtn" class="miniBtn">New Palette</button>
+          <button id="addPaletteColor" class="miniBtn">Add Color</button>
+          <button id="newPaletteBtn" class="miniBtn">New</button>
           <button id="exportPaletteBtn" class="miniBtn">Export</button>
           <button id="importPaletteBtn" class="miniBtn">Import</button>
         </div>

@@ -1,7 +1,6 @@
 (function () {
     'use strict';
 
-    // --- TOOLS ---
     const tools = [
         { id: 'tool-brush', val: 'brush', label: 'Brush', checked: true },
         { id: 'tool-eraser', val: 'eraser', label: 'Eraser' },
@@ -39,7 +38,6 @@
         toolContainer.replaceChildren(frag);
     }
 
-    // --- LAYERS ---
     const layers = [
         { id: 'bt-line', val: 'line', label: 'LINE', swatchId: 'swatches-line', checked: true },
         { id: 'bt-color', val: 'shade', label: 'SHADE', swatchId: 'swatches-shade' },
