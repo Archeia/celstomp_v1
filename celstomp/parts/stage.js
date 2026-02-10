@@ -52,6 +52,10 @@ document.getElementById('part-app').innerHTML = `
             </div>
           </div>
 
+          <div class="islandPanel islandBrushesSlot" id="islandBrushesSlot">
+            <div class="seg" id="brushSeg"></div>
+          </div>
+
         </div>
 
       </div>

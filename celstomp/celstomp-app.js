@@ -314,6 +314,7 @@
         const hsvWheelCanvas = $("hsvWheelCanvas");
         const hsvWheelPreview = $("hsvWheelPreview");
         const toolSeg = document.getElementById("toolSeg");
+        const brushSeg = document.getElementById("brushSeg");
         const eraserOptionsPopup = document.getElementById("eraserOptionsPopup");
         function openPopupAt(popup, x, y) {
             if (!popup) return;
@@ -666,6 +667,7 @@
         let snapFrames = 1;
         let tool = "brush";
         let brushSize = 3;
+        let brushType = "circle";
         let eraserSize = 100;
         let currentColor = "#000000";
         let usePressureSize = true;
@@ -4406,7 +4408,28 @@
             };
             return stabilizedPt;
         }
-        function stampSquareLine(ctx, x0, y0, x1, y1, size, color, alpha = 1) {
+
+        function getBrushPath(px, py, s) {
+            let brushPath = new Path2D();
+            switch (brushType) {
+                case "circle":
+                    brushPath.ellipse(px + s/2, py + s/2, s, s, 0, 0, 6.28);
+                break;
+                case "oval":
+                    brushPath.ellipse(px + s/2, py + s/2, s, s/3, 0, 0, 6.28);
+                break;
+                case "oval-vertical":
+                    brushPath.ellipse(px + s/2, py + s/2, s/3, s, 0, 0, 6.28);
+                break;
+                case "square":
+                    brushPath.rect(px, py, s, s);
+                break;
+            }
+            brushPath.closePath();
+            return brushPath;
+        }
+
+        function stampLine(ctx, x0, y0, x1, y1, size, color, alpha = 1) { //this draws the pencil
             const s = Math.max(1, Math.round(size));
             const dx = x1 - x0, dy = y1 - y0;
             const dist = Math.hypot(dx, dy);
@@ -4420,7 +4443,7 @@
             for (let i = 0; i <= n; i++) {
                 const px = Math.round(x0 + nx * i - s / 2);
                 const py = Math.round(y0 + ny * i - s / 2);
-                ctx.fillRect(px, py, s, s);
+                ctx.fill(getBrushPath(px, py, s));
             }
             try {
                 markGlobalHistoryDirty();
@@ -5474,7 +5497,7 @@
                     const pressureSize = usePressureSize ? brushSize * p : brushSize;
                     const size = e?.pointerType === "pen" && usePressureTilt ? pressureSize * (1 + t * .75) : pressureSize;
                     const alpha = usePressureOpacity ? p : 1;
-                    stampSquareLine(ctx, x, y, x + .01, y + .01, size, currentColor, alpha);
+                    stampLine(ctx, x, y, x + .01, y + .01, size, currentColor, alpha);
                 } else {
                     if (antiAlias) {
                         ctx.save();
@@ -5495,7 +5518,7 @@
                         const pressureSize = usePressureSize ? brushSize * p : brushSize;
                         const size = e?.pointerType === "pen" && usePressureTilt ? pressureSize * (1 + t * .75) : pressureSize;
                         const alpha = usePressureOpacity ? p : 1;
-                        stampSquareLine(ctx, x, y, x + .01, y + .01, size, currentColor, alpha);
+                        stampLine(ctx, x, y, x + .01, y + .01, size, currentColor, alpha);
                     }
                 }
             } else if (tool === "eraser") {
@@ -5586,7 +5609,7 @@
                     const pressureSize = usePressureSize ? brushSize * p : brushSize;
                     const size = e?.pointerType === "pen" && usePressureTilt ? pressureSize * (1 + t * .75) : pressureSize;
                     const alpha = usePressureOpacity ? p : 1;
-                    stampSquareLine(ctx, lastPt.x, lastPt.y, x, y, size, currentColor, alpha);
+                    stampLine(ctx, lastPt.x, lastPt.y, x, y, size, currentColor, alpha);
                 } else {
                     if (antiAlias) {
                         ctx.save();
@@ -5607,7 +5630,7 @@
                         const pressureSize = usePressureSize ? brushSize * p : brushSize;
                         const size = e?.pointerType === "pen" && usePressureTilt ? pressureSize * (1 + t * .75) : pressureSize;
                         const alpha = usePressureOpacity ? p : 1;
-                        stampSquareLine(ctx, lastPt.x, lastPt.y, x, y, size, currentColor, alpha);
+                        stampLine(ctx, lastPt.x, lastPt.y, x, y, size, currentColor, alpha);
                     }
                 }
             } else if (tool === "eraser") {
@@ -6966,6 +6989,7 @@
         function mountIslandSlots() {
             const island = document.getElementById("floatingIsland");
             const wheelSlot = document.getElementById("islandWheelSlot");
+            const brushesSlot = document.getElementById("islandBrushesSlot");
             const toolsSlot = document.getElementById("islandToolsSlot");
             const layersSlot = document.getElementById("islandLayersSlot");
             if (!island || !wheelSlot || !toolsSlot || !layersSlot) return;
@@ -6980,6 +7004,10 @@
             const mainBrushSizeGroup = document.getElementById("mainBrushSizeGroup");
             if (mainBrushSizeGroup && mainBrushSizeGroup.parentElement !== toolsSlot) {
                 toolsSlot.appendChild(mainBrushSizeGroup);
+            }
+            const brushSeg = document.getElementById("brushSeg");
+            if (brushSeg && brushSeg.parentElement !== brushesSlot) {
+                brushesSlot.appendChild(brushSeg);
             }
             const layerSeg = document.getElementById("layerSeg");
             if (layerSeg && layerSeg.parentElement !== layersSlot) {
@@ -9697,6 +9725,11 @@
             if (tool !== "rect-select" && rectSelection.active && !rectSelection.moving) {
                 clearRectSelection();
             }
+            updateHUD();
+            clearFx();
+        });
+        brushSeg?.addEventListener("change", () => {
+            brushType = document.querySelector('input[name="brush"]:checked')?.value || "circle";
             updateHUD();
             clearFx();
         });
