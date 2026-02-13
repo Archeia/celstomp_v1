@@ -10238,6 +10238,84 @@
         stabilizationSelect?.addEventListener("change", e => {
             applyStabilizationLevel(e.target.value);
         });
+
+        // Font and Canvas Aspect Ratio Settings
+        const ASPECT_RATIOS = {
+            "16:9": { w: 1920, h: 1080 },
+            "4:3": { w: 1600, h: 1200 },
+            "3:2": { w: 1800, h: 1200 },
+            "2:3": { w: 1200, h: 1800 },
+            "1:1": { w: 1200, h: 1200 },
+            "9:16": { w: 1080, h: 1920 }
+        };
+        const FONT_OPTIONS = {
+            "Cascadia": "\"Cascadia\", \"Cascadia Code\", \"Cascadia Mono\", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace",
+            "Roboto Mono": "\"Roboto Mono\", monospace",
+            "Google Sans": "\"Google Sans\", \"Product Sans\", Arial, sans-serif",
+            "Poppins": "\"Poppins\", sans-serif",
+            "Comic Sans MS": "\"Comic Sans MS\", cursive, sans-serif",
+            "Inconstant": "\"Inconstant\", sans-serif",
+            "OpenDyslexic": "\"OpenDyslexicRegular\", \"OpenDyslexic\", sans-serif"
+        };
+        const FONT_STORAGE_KEY = "celstomp.ui.font.v1";
+        const ASPECT_STORAGE_KEY = "celstomp.ui.aspect.v1";
+        const aspectRatioSelect = $("aspectRatioSelect");
+        const fontSelect = $("fontSelect");
+
+        function applyFont(fontName) {
+            const fontStack = FONT_OPTIONS[fontName] || FONT_OPTIONS["Cascadia"];
+            document.documentElement.style.setProperty("--font", fontStack);
+            try {
+                localStorage.setItem(FONT_STORAGE_KEY, fontName);
+            } catch {}
+            if (fontSelect) safeSetValue(fontSelect, fontName);
+        }
+
+        function applyAspectRatio(ratio, skipResize = false) {
+            const preset = ASPECT_RATIOS[ratio];
+            if (preset) {
+                contentW = preset.w;
+                contentH = preset.h;
+            }
+            try {
+                localStorage.setItem(ASPECT_STORAGE_KEY, ratio);
+            } catch {}
+            if (aspectRatioSelect) safeSetValue(aspectRatioSelect, ratio);
+            if (!skipResize) {
+                resizeCanvases();
+            }
+        }
+
+        // Load saved settings
+        (function loadSavedSettings() {
+            // Load font
+            let savedFont = "Cascadia";
+            try {
+                savedFont = localStorage.getItem(FONT_STORAGE_KEY) || "Cascadia";
+            } catch {}
+            if (FONT_OPTIONS[savedFont]) {
+                applyFont(savedFont);
+            }
+
+            // Load aspect ratio
+            let savedAspect = "16:9";
+            try {
+                savedAspect = localStorage.getItem(ASPECT_STORAGE_KEY) || "16:9";
+            } catch {}
+            if (ASPECT_RATIOS[savedAspect]) {
+                applyAspectRatio(savedAspect, true);
+            }
+        })();
+
+        // Event listeners
+        fontSelect?.addEventListener("change", e => {
+            applyFont(e.target.value);
+        });
+
+        aspectRatioSelect?.addEventListener("change", e => {
+            applyAspectRatio(e.target.value);
+        });
+
         const clampBrushSizeUiValue = raw => {
             const n = parseInt(raw, 10);
             const min = parseInt(brushSizeInput?.min || brushSizeNumInput?.min || "1", 10) || 1;

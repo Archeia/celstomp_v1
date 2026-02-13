@@ -54,6 +54,29 @@ document.getElementById('part-header').innerHTML = `
                 <option value="10">10</option>
               </select>
             </label>
+            <label class="topMenuSelectRow" for="aspectRatioSelect">
+              <span>Canvas Aspect</span>
+              <select id="aspectRatioSelect">
+                <option value="16:9">16:9 (1920×1080)</option>
+                <option value="4:3">4:3 (1600×1200)</option>
+                <option value="3:2">3:2 (1800×1200)</option>
+                <option value="2:3">2:3 (1200×1800)</option>
+                <option value="1:1">1:1 (1200×1200)</option>
+                <option value="9:16">9:16 (1080×1920)</option>
+              </select>
+            </label>
+            <label class="topMenuSelectRow" for="fontSelect">
+              <span>Font</span>
+              <select id="fontSelect">
+                <option value="Cascadia">Cascadia</option>
+                <option value="Roboto Mono">Roboto Mono</option>
+                <option value="Google Sans">Google Sans</option>
+                <option value="Poppins">Poppins</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Inconstant">Inconstant</option>
+                <option value="OpenDyslexic">OpenDyslexic</option>
+              </select>
+            </label>
             <div id="penControls" class="topMenuPenControls" hidden>
               <label class="chip"><input id="pressureSize" type="checkbox" checked /> Pen pressure size</label>
               <label class="chip"><input id="pressureOpacity" type="checkbox" /> Pen pressure opacity</label>
