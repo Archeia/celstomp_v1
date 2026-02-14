@@ -58,8 +58,7 @@ function wirePointerDrawingOnCanvas(drawCanvas) {
   const START_DELAY_MS = 70;
   const START_MOVE_PX = 4;
   const IMMEDIATE_TOOLS = new Set([ "fill-brush", "fill-eraser", "lasso-fill", "lasso-erase" ]);
-  const VIEW_MIN = .05;
-  const VIEW_MAX = 16;
+  const VIEW_MAX = typeof ZOOM_MAX === "number" ? ZOOM_MAX : 16;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   function clientToCanvasLocal(clientX, clientY) {
       const rect = drawCanvas.getBoundingClientRect();
@@ -106,7 +105,7 @@ function wirePointerDrawingOnCanvas(drawCanvas) {
       if (!a || !b) return;
       const curDist = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
       const ratio = curDist / (pinch.startDist || 1);
-      const nextZoom = clamp(pinch.startZoom * ratio, VIEW_MIN, VIEW_MAX);
+      const nextZoom = typeof clampZoomToWorld === "function" ? clampZoomToWorld(pinch.startZoom * ratio, drawCanvas) : clamp(pinch.startZoom * ratio, .01, VIEW_MAX);
       const mid = {
           x: (a.x + b.x) / 2,
           y: (a.y + b.y) / 2

@@ -7,6 +7,7 @@ document.getElementById('part-app').innerHTML = `
         <canvas id="boundsCanvas"></canvas>
         <canvas id="drawCanvas"></canvas>
         <canvas id="fxCanvas"></canvas>
+        <div id="frameOutline" aria-hidden="true"></div>
 
         <div id="hud">
           <span>Tool: <strong id="toolName">Brush</strong></span>

@@ -154,8 +154,10 @@ function centerView() {
   const drawCanvas = getCanvas(CANVAS_TYPE.drawCanvas);
   const cw = drawCanvas.width;
   const ch = drawCanvas.height;
-  setOffsetX((cw - contentW * getZoom() * dpr) / 2);
-  setOffsetY((ch - contentH * getZoom() * dpr) / 2);
+  const targetX = (Number.isFinite(frameX) ? frameX : 0) + (Number.isFinite(frameW) ? frameW : contentW) / 2;
+  const targetY = (Number.isFinite(frameY) ? frameY : 0) + (Number.isFinite(frameH) ? frameH : contentH) / 2;
+  setOffsetX(cw / 2 - targetX * getZoom() * dpr);
+  setOffsetY(ch / 2 - targetY * getZoom() * dpr);
   queueUpdateHud();
   queueRenderAll();
   updatePlayheadMarker();

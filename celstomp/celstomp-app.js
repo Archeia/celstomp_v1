@@ -19,8 +19,12 @@
     }
     
     ready(() => {
-        let contentW = 960;
-        let contentH = 540;
+        if (!Number.isFinite(contentW) || contentW < 16) contentW = 2560;
+        if (!Number.isFinite(contentH) || contentH < 16) contentH = 1440;
+        if (!Number.isFinite(frameW) || frameW < 16) frameW = 1280;
+        if (!Number.isFinite(frameH) || frameH < 16) frameH = 720;
+        if (!Number.isFinite(frameX)) frameX = Math.floor((contentW - frameW) / 2);
+        if (!Number.isFinite(frameY)) frameY = Math.floor((contentH - frameH) / 2);
         
         const stageEl = $("stage");
 
@@ -41,6 +45,7 @@
 
         // front
         const fxCanvas = getCanvas(CANVAS_TYPE.fxCanvas);
+        const frameOutlineEl = $("frameOutline");
 
         // mostly sanity checks
         if (!stageEl || !boundsCanvas || !getCanvas(CANVAS_TYPE.drawCanvas) || !fxCanvas) {
@@ -97,6 +102,8 @@
         const chooseLassoFillBtn = $("chooseLassoFill");
         const addPaletteColorBtn = $("addPaletteColor");
         const newProjBtn = $("newProj");
+        const editProjectSettingsBtn = $("editProjectSettingsBtn");
+        const projectNameBadge = $("projectNameBadge");
 
         const homeModalBackdrop = $("homeModalBackdrop");
         const homeModal = $("homeModal");
@@ -106,6 +113,21 @@
         const homeRestoreDraftBtn = $("homeRestoreDraftBtn");
         const homeRecentList = $("homeRecentList");
         const createAspectSelect = $("createAspectSelect");
+        const createAspectCustomRow = $("createAspectCustomRow");
+        const createAspectW = $("createAspectW");
+        const createAspectH = $("createAspectH");
+        const homeProjectNameInput = $("homeProjectNameInput");
+        const homePaperColorInput = $("homePaperColorInput");
+        const constrainFrameToggle = $("constrainFrameToggle");
+        const projectSettingsModalBackdrop = $("projectSettingsModalBackdrop");
+        const projectSettingsModal = $("projectSettingsModal");
+        const projectSettingsCancelBtn = $("projectSettingsCancelBtn");
+        const projectSettingsApplyBtn = $("projectSettingsApplyBtn");
+        const projectAspectSelect = $("projectAspectSelect");
+        const projectAspectCustomRow = $("projectAspectCustomRow");
+        const projectAspectW = $("projectAspectW");
+        const projectAspectH = $("projectAspectH");
+        const projectNameInput = $("projectNameInput");
 
         const defLInput = $("defL");
         const defCInput = $("defC");
@@ -354,11 +376,29 @@
         function renderBounds() {
             setTransform(bctx);
             setTransform(fxctx);
-            bctx.fillStyle = "#2a2f38";
-            bctx.strokeStyle = "#3b4759";
-            bctx.lineWidth = 2 / Math.max(getZoom(), 1);
+            bctx.fillStyle = canvasBgColor || "#bfbfbf";
             bctx.fillRect(0, 0, contentW, contentH);
-            bctx.strokeRect(0, 0, contentW, contentH);
+            const z = Math.max(getZoom(), 0.01);
+            const hairline = clamp(1.05 / z, 1.05, 4.2);
+            bctx.lineWidth = hairline * 1.25;
+            bctx.strokeStyle = "rgba(34,44,62,.92)";
+            bctx.strokeRect(frameX, frameY, frameW, frameH);
+            bctx.lineWidth = hairline;
+            bctx.strokeStyle = "rgba(10,14,20,.98)";
+            bctx.strokeRect(frameX, frameY, frameW, frameH);
+            const cssLeft = frameX * z + getOffsetX() / dpr;
+            const cssTop = frameY * z + getOffsetY() / dpr;
+            const cssW = frameW * z;
+            const cssH = frameH * z;
+            const outlinePx = clamp(1.15 / z, 1.1, 4.5);
+            if (frameOutlineEl) {
+                frameOutlineEl.style.left = `${cssLeft}px`;
+                frameOutlineEl.style.top = `${cssTop}px`;
+                frameOutlineEl.style.width = `${cssW}px`;
+                frameOutlineEl.style.height = `${cssH}px`;
+                frameOutlineEl.style.borderWidth = `${outlinePx}px`;
+                frameOutlineEl.style.outlineWidth = `${Math.max(1, outlinePx * 0.5)}px`;
+            }
             drawRectSelectionOverlay(fxctx);
         }
         
@@ -436,8 +476,7 @@
             } catch {}
             const touches = new Map;
             let pinch = null;
-            const VIEW_MIN = .05;
-            const VIEW_MAX = 16;
+            const VIEW_MAX = typeof ZOOM_MAX === "number" ? ZOOM_MAX : 16;
             const clampNum = (v, a, b) => Math.max(a, Math.min(b, v));
             function clientToCanvasLocal(clientX, clientY) {
                 const rect = getCanvas(CANVAS_TYPE.drawCanvas).getBoundingClientRect();
@@ -488,7 +527,7 @@
                     y: (a.y + b.y) / 2
                 };
                 const midLocal = clientToCanvasLocal(mid.x, mid.y);
-                const zl = clampNum(pinch.startZoom * factor, VIEW_MIN, VIEW_MAX);
+                const zl = typeof clampZoomToWorld === "function" ? clampZoomToWorld(pinch.startZoom * factor, drawCanvas) : clampNum(pinch.startZoom * factor, .01, VIEW_MAX);
                 setZoom(zl)
                 const after = screenToContent(midLocal.x, midLocal.y);
                 setOffsetX(pinch.startOffsetX + (after.x - pinch.anchorContent.x) * (getZoom() * dpr));
@@ -560,7 +599,7 @@
             const factor = Math.exp(-e.deltaY * .0015);
             const pos = getCanvasPointer(e);
             const before = screenToContent(pos.x, pos.y);
-            setZoom(clamp(getZoom() * factor, .05, 16));
+            setZoom(typeof clampZoomToWorld === "function" ? clampZoomToWorld(getZoom() * factor, drawCanvas) : clamp(getZoom() * factor, .01, 16));
             const after = screenToContent(pos.x, pos.y);
             setOffsetX(getOffsetX() + (after.x - before.x) * (getZoom() * dpr));
             setOffsetY(getOffsetY() + (after.y - before.y) * (getZoom() * dpr));
@@ -1094,7 +1133,8 @@
 
         // Font and project defaults
         const ASPECT_RATIOS = {
-            "16:9": { w: 1920, h: 1080 },
+            "16:9": { w: 1280, h: 720 },
+            "16:9-1080": { w: 1920, h: 1080 },
             "4:3": { w: 1600, h: 1200 },
             "3:2": { w: 1800, h: 1200 },
             "2:3": { w: 1200, h: 1800 },
@@ -1117,6 +1157,20 @@
         const fontSelect = $("fontSelect");
         let projectBooted = false;
 
+        function setProjectName(next, persist = true) {
+            projectName = String(next || "").trim() || "Untitled Project";
+            if (projectNameBadge) projectNameBadge.textContent = projectName;
+            document.title = `${projectName} - Celstomp`;
+            if (projectNameInput) projectNameInput.value = projectName;
+            if (homeProjectNameInput) homeProjectNameInput.value = projectName;
+            if (persist) {
+                try {
+                    markProjectDirty?.();
+                } catch {}
+            }
+        }
+        window.setProjectName = setProjectName;
+
         function applyFont(fontName) {
             const fontStack = FONT_OPTIONS[fontName] || FONT_OPTIONS["Cascadia"];
             document.documentElement.style.setProperty("--font", fontStack);
@@ -1127,16 +1181,35 @@
         }
 
         function normalizedAspectRatio(ratio) {
-            return ASPECT_RATIOS[ratio] ? ratio : "16:9";
+            return ASPECT_RATIOS[ratio] || ratio === "custom" ? ratio : "16:9";
+        }
+
+        function ensureFrameFitsWorkspace(center = false) {
+            const pad = 640;
+            const minW = Math.max(frameW + pad * 2, Math.round(frameW * 2));
+            const minH = Math.max(frameH + pad * 2, Math.round(frameH * 2));
+            if (contentW < minW) contentW = minW;
+            if (contentH < minH) contentH = minH;
+            if (center || !Number.isFinite(frameX) || !Number.isFinite(frameY)) {
+                frameX = Math.floor((contentW - frameW) / 2);
+                frameY = Math.floor((contentH - frameH) / 2);
+            } else {
+                frameX = clamp(frameX, 0, Math.max(0, contentW - frameW));
+                frameY = clamp(frameY, 0, Math.max(0, contentH - frameH));
+            }
         }
 
         function applyAspectRatio(ratio, skipResize = false) {
             const nextRatio = normalizedAspectRatio(ratio);
-            const preset = ASPECT_RATIOS[nextRatio];
-            if (preset) {
-                contentW = preset.w;
-                contentH = preset.h;
+            if (nextRatio === "custom") {
+                frameW = clamp(parseInt(createAspectW?.value, 10) || frameW || 1280, 16, 8192);
+                frameH = clamp(parseInt(createAspectH?.value, 10) || frameH || 720, 16, 8192);
+            } else {
+                const preset = ASPECT_RATIOS[nextRatio] || ASPECT_RATIOS["16:9"];
+                frameW = preset.w;
+                frameH = preset.h;
             }
+            ensureFrameFitsWorkspace(true);
             try {
                 syncAllLayerCanvasSizesToContent?.();
             } catch {}
@@ -1144,8 +1217,12 @@
                 localStorage.setItem(ASPECT_STORAGE_KEY, nextRatio);
             } catch {}
             if (createAspectSelect) safeSetValue(createAspectSelect, nextRatio);
+            if (createAspectCustomRow) createAspectCustomRow.hidden = nextRatio !== "custom";
+            if (createAspectW) safeSetValue(createAspectW, frameW);
+            if (createAspectH) safeSetValue(createAspectH, frameH);
             if (!skipResize) {
                 resizeCanvases();
+                centerView();
                 try {
                     queueRenderAll?.();
                 } catch {}
@@ -1169,6 +1246,8 @@
                 savedAspect = localStorage.getItem(ASPECT_STORAGE_KEY) || "16:9";
             } catch {}
             safeSetValue(createAspectSelect, normalizedAspectRatio(savedAspect));
+            if (createAspectCustomRow) createAspectCustomRow.hidden = normalizedAspectRatio(savedAspect) !== "custom";
+            setProjectName(projectName, false);
         })();
 
         // Event listeners
@@ -1177,8 +1256,22 @@
         });
 
         createAspectSelect?.addEventListener("change", e => {
-            applyAspectRatio(e.target.value, true);
+            const v = e.target.value;
+            if (createAspectCustomRow) createAspectCustomRow.hidden = v !== "custom";
+            applyAspectRatio(v, true);
         });
+        createAspectW?.addEventListener("input", () => {
+            if ((createAspectSelect?.value || "") !== "custom") return;
+            applyAspectRatio("custom", true);
+        });
+        createAspectH?.addEventListener("input", () => {
+            if ((createAspectSelect?.value || "") !== "custom") return;
+            applyAspectRatio("custom", true);
+        });
+        constrainFrameToggle?.addEventListener("change", e => {
+            constrainToFrame = !!e.target.checked;
+        });
+        if (constrainFrameToggle) constrainFrameToggle.checked = !!constrainToFrame;
 
         const clampBrushSizeUiValue = raw => {
             const n = parseInt(raw, 10);
@@ -1445,16 +1538,18 @@
         }
 
         function recordRecentProject(meta = {}) {
-            const name = String(meta.fileName || "Untitled Project").trim() || "Untitled Project";
+            const fileName = String(meta.fileName || "untitled.json").trim() || "untitled.json";
+            const projName = String(meta.projectName || projectName || "Untitled Project").trim() || "Untitled Project";
             const now = Date.now();
             const nextItem = {
-                id: `${name}:${now}`,
-                name: name,
+                id: `${fileName}:${projName}:${now}`,
+                name: fileName,
+                projectName: projName,
                 openedAt: now,
                 source: String(meta.source || "file"),
                 missing: true
             };
-            const existing = readRecentProjects().filter(it => it.name !== name);
+            const existing = readRecentProjects().filter(it => !(it.name === fileName && (it.projectName || "") === projName));
             const next = [ nextItem, ...existing ].slice(0, RECENT_PROJECTS_LIMIT);
             writeRecentProjects(next);
             renderRecentProjects();
@@ -1484,7 +1579,7 @@
                 meta.className = "homeRecentMeta";
                 const name = document.createElement("div");
                 name.className = "homeRecentName";
-                name.textContent = item.name;
+                name.textContent = `${item.projectName || "Untitled Project"} - ${item.name}`;
                 const sub = document.createElement("div");
                 sub.className = "homeRecentSub homeRecentMissing";
                 sub.textContent = "File link unavailable in-browser. Open manually if moved.";
@@ -1508,6 +1603,40 @@
             if (homeRestoreDraftBtn) homeRestoreDraftBtn.disabled = !hasDraft;
         }
 
+        function syncProjectSettingsModalFields() {
+            if (projectNameInput) projectNameInput.value = projectName;
+            const known = Object.entries(ASPECT_RATIOS).find(([, v]) => v.w === frameW && v.h === frameH)?.[0] || "custom";
+            if (projectAspectSelect) projectAspectSelect.value = known;
+            if (projectAspectCustomRow) projectAspectCustomRow.hidden = known !== "custom";
+            if (projectAspectW) projectAspectW.value = String(frameW);
+            if (projectAspectH) projectAspectH.value = String(frameH);
+        }
+
+        function openProjectSettingsModal() {
+            syncProjectSettingsModalFields();
+            if (projectSettingsModalBackdrop) projectSettingsModalBackdrop.hidden = false;
+            if (projectSettingsModal) projectSettingsModal.hidden = false;
+        }
+
+        function closeProjectSettingsModal() {
+            if (projectSettingsModalBackdrop) projectSettingsModalBackdrop.hidden = true;
+            if (projectSettingsModal) projectSettingsModal.hidden = true;
+        }
+
+        function applyProjectSettingsFromModal() {
+            setProjectName(projectNameInput?.value || projectName || "Untitled Project", true);
+            const ratio = projectAspectSelect?.value || "custom";
+            if (ratio === "custom") {
+                if (createAspectSelect) createAspectSelect.value = "custom";
+                if (createAspectW) createAspectW.value = String(clamp(parseInt(projectAspectW?.value, 10) || frameW, 16, 8192));
+                if (createAspectH) createAspectH.value = String(clamp(parseInt(projectAspectH?.value, 10) || frameH, 16, 8192));
+            } else {
+                if (createAspectSelect) createAspectSelect.value = ratio;
+            }
+            applyAspectRatio(ratio, false);
+            closeProjectSettingsModal();
+        }
+
         function openHomeModal() {
             if (homeModalBackdrop) homeModalBackdrop.hidden = false;
             if (homeModal) homeModal.hidden = false;
@@ -1520,7 +1649,13 @@
                     return "16:9";
                 }
             })();
-            safeSetValue(createAspectSelect, normalizedAspectRatio(preferredAspect));
+            const norm = normalizedAspectRatio(preferredAspect);
+            safeSetValue(createAspectSelect, norm);
+            if (createAspectCustomRow) createAspectCustomRow.hidden = norm !== "custom";
+            if (createAspectW) safeSetValue(createAspectW, frameW);
+            if (createAspectH) safeSetValue(createAspectH, frameH);
+            if (homeProjectNameInput) homeProjectNameInput.value = projectName || "Untitled Project";
+            if (homePaperColorInput) homePaperColorInput.value = normalizeToHex(canvasBgColor || "#bfbfbf");
         }
 
         function closeHomeModal() {
@@ -1536,8 +1671,12 @@
 
         function startNewProject() {
             ensureProjectBooted();
+            constrainToFrame = false;
+            if (constrainFrameToggle) constrainFrameToggle.checked = false;
+            setProjectName(homeProjectNameInput?.value || "Untitled Project", false);
             const ratio = createAspectSelect?.value || "16:9";
             applyAspectRatio(ratio, true);
+            setCanvasBgColor(homePaperColorInput?.value || canvasBgColor || "#bfbfbf");
             blankProjectState();
             buildTimeline();
             resizeCanvases();
@@ -1585,12 +1724,20 @@
         clearColorBtn?.addEventListener("click", clearSelectedColorAction);
         clearLayerBtn?.addEventListener("click", clearSelectedLayerAction);
         newProjBtn?.addEventListener("click", openHomeModal);
+        editProjectSettingsBtn?.addEventListener("click", openProjectSettingsModal);
         homeNewProjectBtn?.addEventListener("click", startNewProject);
         homeOpenProjectBtn?.addEventListener("click", () => {
             $("loadFileInp").value = "";
             $("loadFileInp").click();
         });
         homeRestoreDraftBtn?.addEventListener("click", () => restoreDraftFromHome("autosave-home"));
+        projectAspectSelect?.addEventListener("change", () => {
+            const isCustom = (projectAspectSelect.value || "") === "custom";
+            if (projectAspectCustomRow) projectAspectCustomRow.hidden = !isCustom;
+        });
+        projectSettingsCancelBtn?.addEventListener("click", closeProjectSettingsModal);
+        projectSettingsModalBackdrop?.addEventListener("click", closeProjectSettingsModal);
+        projectSettingsApplyBtn?.addEventListener("click", applyProjectSettingsFromModal);
 
         $("clearAllBtn")?.addEventListener("click", clearAllProjectState);
         $("dupCelBtn")?.addEventListener("click", onDuplicateCel);
@@ -1679,6 +1826,8 @@
         initIslandLayerAutoFit();
 
         function buildAndInit() {
+            constrainToFrame = false;
+            if (constrainFrameToggle) constrainFrameToggle.checked = false;
             buildTimeline();
             resizeCanvases();
             resetCenter();
@@ -1686,6 +1835,7 @@
             initHSVWheelPicker();
             setPickerDefaultBlack();
             setColorSwatch();
+            setCanvasBgColor(canvasBgColor);
             loadPalette();
             renderPalette();
             if (bgColorInput) bgColorInput.value = canvasBgColor;

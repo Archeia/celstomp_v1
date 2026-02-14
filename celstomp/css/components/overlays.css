@@ -226,6 +226,13 @@
   min-height: 52px;
 }
 
+.homeCustomRow{
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
 .homeRecentItem{
   display: grid;
   grid-template-columns: 1fr auto;

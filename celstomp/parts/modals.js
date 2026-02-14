@@ -14,17 +14,33 @@ document.getElementById('part-modals').innerHTML = `
     </div>
     <h3 id="homeModalTitle">Welcome to Celstomp</h3>
     <p>Start by creating a project or loading one from disk.</p>
+    <label class="sideSelectRow" for="homeProjectNameInput">
+      <span>Project Name</span>
+      <input id="homeProjectNameInput" type="text" maxlength="80" value="Untitled Project" />
+    </label>
+    <label class="sideSelectRow" for="homePaperColorInput">
+      <span>Paper Color</span>
+      <input id="homePaperColorInput" type="color" value="#bfbfbf" />
+    </label>
     <label class="sideSelectRow" for="createAspectSelect">
       <span>Canvas Aspect</span>
       <select id="createAspectSelect">
-        <option value="16:9">16:9 (1920x1080)</option>
+        <option value="16:9">16:9 (1280x720)</option>
+        <option value="16:9-1080">16:9 (1920x1080)</option>
         <option value="4:3">4:3 (1600x1200)</option>
         <option value="3:2">3:2 (1800x1200)</option>
         <option value="2:3">2:3 (1200x1800)</option>
         <option value="1:1">1:1 (1200x1200)</option>
         <option value="9:16">9:16 (1080x1920)</option>
+        <option value="custom">Custom</option>
       </select>
     </label>
+    <div id="createAspectCustomRow" class="homeCustomRow" hidden>
+      <label for="createAspectW">W</label>
+      <input id="createAspectW" type="number" min="16" max="8192" step="1" value="1280" />
+      <label for="createAspectH">H</label>
+      <input id="createAspectH" type="number" min="16" max="8192" step="1" value="720" />
+    </div>
     <div class="modalActions homeActions">
       <button id="homeNewProjectBtn" type="button">New Project</button>
       <button id="homeOpenProjectBtn" type="button">Open Project</button>
@@ -32,6 +48,38 @@ document.getElementById('part-modals').innerHTML = `
     </div>
     <div class="homeRecentHead">Recent Projects</div>
     <div id="homeRecentList" class="homeRecentList" aria-live="polite"></div>
+  </div>
+
+  <div id="projectSettingsModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="projectSettingsModal" class="modalCard homeModal" role="dialog" aria-modal="true" aria-labelledby="projectSettingsModalTitle" hidden>
+    <h3 id="projectSettingsModalTitle">Project Settings</h3>
+    <label class="sideSelectRow" for="projectNameInput">
+      <span>Project Name</span>
+      <input id="projectNameInput" type="text" maxlength="80" value="Untitled Project" />
+    </label>
+    <label class="sideSelectRow" for="projectAspectSelect">
+      <span>Frame Aspect</span>
+      <select id="projectAspectSelect">
+        <option value="16:9">16:9 (1280x720)</option>
+        <option value="16:9-1080">16:9 (1920x1080)</option>
+        <option value="4:3">4:3 (1600x1200)</option>
+        <option value="3:2">3:2 (1800x1200)</option>
+        <option value="2:3">2:3 (1200x1800)</option>
+        <option value="1:1">1:1 (1200x1200)</option>
+        <option value="9:16">9:16 (1080x1920)</option>
+        <option value="custom">Custom</option>
+      </select>
+    </label>
+    <div id="projectAspectCustomRow" class="homeCustomRow" hidden>
+      <label for="projectAspectW">W</label>
+      <input id="projectAspectW" type="number" min="16" max="8192" step="1" value="1280" />
+      <label for="projectAspectH">H</label>
+      <input id="projectAspectH" type="number" min="16" max="8192" step="1" value="720" />
+    </div>
+    <div class="modalActions">
+      <button id="projectSettingsCancelBtn" type="button">Cancel</button>
+      <button id="projectSettingsApplyBtn" type="button">Apply</button>
+    </div>
   </div>
 
   <div id="mobileGateBackdrop" class="modalBackdrop" hidden></div>

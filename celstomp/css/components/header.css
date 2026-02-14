@@ -209,6 +209,13 @@ header.top .topSlot.right{
   opacity: 0.85;
 }
 
+#projectNameBadge{
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 @media (max-width: 720px){
   header.top{ padding: 0 10px; }

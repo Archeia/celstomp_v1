@@ -421,7 +421,11 @@ function renderLayerSwatches(onlyLayer = null) {
 
 function setCanvasBgColor(next) {
   canvasBgColor = normalizeToHex(next || canvasBgColor || "#bfbfbf");
-  if (bgColorInput) bgColorInput.value = canvasBgColor;
+  const bgColorInputEl = document.getElementById("bgColor");
+  if (bgColorInputEl) bgColorInputEl.value = canvasBgColor;
+  try {
+      document.documentElement.style.setProperty("--paper-bg", canvasBgColor);
+  } catch {}
   renderPaperSwatch();
 }
 

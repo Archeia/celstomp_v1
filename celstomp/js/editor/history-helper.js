@@ -81,10 +81,16 @@ function snapshotFor(L, F, key) {
     const c = getFrameCanvas(L, F, k);
     if (!c || !c._hasContent) return null;
     try {
-        const ctx = c.getContext("2d", {
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.max(1, contentW | 0);
+        tmp.height = Math.max(1, contentH | 0);
+        const ctx = tmp.getContext("2d", {
             willReadFrequently: true
         });
-
+        if (!ctx) return null;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, tmp.width, tmp.height);
+        ctx.drawImage(c, 0, 0, c.width || 1, c.height || 1, 0, 0, tmp.width, tmp.height);
         return ctx.getImageData(0, 0, contentW, contentH);
     } catch {
         return null;

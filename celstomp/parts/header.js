@@ -6,6 +6,7 @@ document.getElementById('part-header').innerHTML = `
           <button id="menuFileBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuFilePanel">File</button>
           <div id="menuFilePanel" class="topMenuPanel" role="menu" hidden>
             <button id="newProj" class="topMenuItem" type="button" role="menuitem">Create New Project</button>
+            <button id="editProjectSettingsBtn" class="topMenuItem" type="button" role="menuitem">Edit Project Settings...</button>
             <button id="saveProj" class="topMenuItem" type="button" role="menuitem">Save</button>
             <button id="loadProj" class="topMenuItem" type="button" role="menuitem">Load</button>
             <button id="restoreAutosave" class="topMenuItem" type="button" role="menuitem" title="Restore latest autosaved draft" disabled>Restore Draft</button>
@@ -80,10 +81,15 @@ document.getElementById('part-header').innerHTML = `
               <span>Triangle Picker</span>
               <input id="trianglePickerToggle" type="checkbox" />
             </label>
+            <label class="topMenuSelectRow topMenuCheckRow" for="constrainFrameToggle">
+              <span>Constrain to Frame</span>
+              <input id="constrainFrameToggle" type="checkbox" />
+            </label>
           </div>
         </div>
       </div>
       <div id="saveStateBadge" class="saveStateBadge saveStateChip" role="status" aria-live="polite">Saved</div>
+      <div id="projectNameBadge" class="saveStateBadge saveStateChip" title="Current project name">Untitled Project</div>
     </div>
 
     <div class="brand">
