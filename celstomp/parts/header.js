@@ -5,6 +5,7 @@ document.getElementById('part-header').innerHTML = `
         <div class="topMenuWrap" data-menu="file">
           <button id="menuFileBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuFilePanel">File</button>
           <div id="menuFilePanel" class="topMenuPanel" role="menu" hidden>
+            <button id="newProj" class="topMenuItem" type="button" role="menuitem">Create New Project</button>
             <button id="saveProj" class="topMenuItem" type="button" role="menuitem">Save</button>
             <button id="loadProj" class="topMenuItem" type="button" role="menuitem">Load</button>
             <button id="restoreAutosave" class="topMenuItem" type="button" role="menuitem" title="Restore latest autosaved draft" disabled>Restore Draft</button>
@@ -31,6 +32,10 @@ document.getElementById('part-header').innerHTML = `
         <div class="topMenuWrap" data-menu="edit">
           <button id="menuEditBtn" class="topBtn topMenuTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuEditPanel">Edit</button>
           <div id="menuEditPanel" class="topMenuPanel" role="menu" hidden>
+            <button id="clearCelBtn" class="topMenuItem" type="button" role="menuitem">Clear Cel</button>
+            <button id="clearColorBtn" class="topMenuItem" type="button" role="menuitem">Clear Selected Color</button>
+            <button id="clearLayerBtn" class="topMenuItem" type="button" role="menuitem">Clear Selected Layer</button>
+            <div class="topMenuSep" role="separator"></div>
             <button id="clearAllBtn" class="topMenuItem danger" type="button" role="menuitem">Clear All</button>
           </div>
         </div>
@@ -54,17 +59,6 @@ document.getElementById('part-header').innerHTML = `
                 <option value="10">10</option>
               </select>
             </label>
-            <label class="topMenuSelectRow" for="aspectRatioSelect">
-              <span>Canvas Aspect</span>
-              <select id="aspectRatioSelect">
-                <option value="16:9">16:9 (1920×1080)</option>
-                <option value="4:3">4:3 (1600×1200)</option>
-                <option value="3:2">3:2 (1800×1200)</option>
-                <option value="2:3">2:3 (1200×1800)</option>
-                <option value="1:1">1:1 (1200×1200)</option>
-                <option value="9:16">9:16 (1080×1920)</option>
-              </select>
-            </label>
             <label class="topMenuSelectRow" for="fontSelect">
               <span>Font</span>
               <select id="fontSelect">
@@ -82,6 +76,10 @@ document.getElementById('part-header').innerHTML = `
               <label class="chip"><input id="pressureOpacity" type="checkbox" /> Pen pressure opacity</label>
               <label class="chip"><input id="pressureTilt" type="checkbox" /> Pen tilt/rotation</label>
             </div>
+            <label class="topMenuSelectRow topMenuCheckRow" for="trianglePickerToggle">
+              <span>Triangle Picker</span>
+              <input id="trianglePickerToggle" type="checkbox" />
+            </label>
           </div>
         </div>
       </div>

@@ -189,6 +189,78 @@
   background: rgba(255,255,255,0.04);
 }
 
+.homeModal{
+  width: min(94vw, 520px);
+  max-height: min(82dvh, 760px);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.homeActions{
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.homeDraftBanner{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 205, 112, .7);
+  background: rgba(95, 58, 18, .85);
+  color: #ffe4b8;
+  font-size: 12px;
+}
+
+.homeRecentHead{
+  font-size: 12px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  opacity: .82;
+}
+
+.homeRecentList{
+  display: grid;
+  gap: 8px;
+  min-height: 52px;
+}
+
+.homeRecentItem{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.20);
+  padding: 8px;
+}
+
+.homeRecentMeta{
+  display: grid;
+  gap: 2px;
+}
+
+.homeRecentName{
+  font-size: 13px;
+  color: rgba(255,255,255,.92);
+}
+
+.homeRecentSub{
+  font-size: 11px;
+  color: rgba(255,255,255,.65);
+}
+
+.homeRecentMissing{
+  color: #ffb8b8;
+}
+
+.homeRecentRemove{
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
 
 /* Swatch Context Menu */
 #swatchCtxMenu{

@@ -89,10 +89,23 @@
         const autofillToggle = $("autofillToggle");
         const fillCurrentBtn = $("fillCurrent");
         const fillAllBtn = $("fillAll");
+        const clearCelBtn = $("clearCelBtn");
+        const clearColorBtn = $("clearColorBtn");
+        const clearLayerBtn = $("clearLayerBtn");
         const chooseFillEraserBtn = $("chooseFillEraser");
         const chooseFillBrushBtn = $("chooseFillBrush");
         const chooseLassoFillBtn = $("chooseLassoFill");
         const addPaletteColorBtn = $("addPaletteColor");
+        const newProjBtn = $("newProj");
+
+        const homeModalBackdrop = $("homeModalBackdrop");
+        const homeModal = $("homeModal");
+        const homeDraftBanner = $("homeDraftBanner");
+        const homeNewProjectBtn = $("homeNewProjectBtn");
+        const homeOpenProjectBtn = $("homeOpenProjectBtn");
+        const homeRestoreDraftBtn = $("homeRestoreDraftBtn");
+        const homeRecentList = $("homeRecentList");
+        const createAspectSelect = $("createAspectSelect");
 
         const defLInput = $("defL");
         const defCInput = $("defC");
@@ -339,6 +352,7 @@
         
         
         function renderBounds() {
+            setTransform(bctx);
             setTransform(fxctx);
             bctx.fillStyle = "#2a2f38";
             bctx.strokeStyle = "#3b4759";
@@ -1078,7 +1092,7 @@
             applyStabilizationLevel(e.target.value);
         });
 
-        // Font and Canvas Aspect Ratio Settings
+        // Font and project defaults
         const ASPECT_RATIOS = {
             "16:9": { w: 1920, h: 1080 },
             "4:3": { w: 1600, h: 1200 },
@@ -1098,8 +1112,10 @@
         };
         const FONT_STORAGE_KEY = "celstomp.ui.font.v1";
         const ASPECT_STORAGE_KEY = "celstomp.ui.aspect.v1";
-        const aspectRatioSelect = $("aspectRatioSelect");
+        const RECENT_PROJECTS_KEY = "celstomp.recent.projects.v1";
+        const RECENT_PROJECTS_LIMIT = 12;
         const fontSelect = $("fontSelect");
+        let projectBooted = false;
 
         function applyFont(fontName) {
             const fontStack = FONT_OPTIONS[fontName] || FONT_OPTIONS["Cascadia"];
@@ -1110,18 +1126,29 @@
             if (fontSelect) safeSetValue(fontSelect, fontName);
         }
 
+        function normalizedAspectRatio(ratio) {
+            return ASPECT_RATIOS[ratio] ? ratio : "16:9";
+        }
+
         function applyAspectRatio(ratio, skipResize = false) {
-            const preset = ASPECT_RATIOS[ratio];
+            const nextRatio = normalizedAspectRatio(ratio);
+            const preset = ASPECT_RATIOS[nextRatio];
             if (preset) {
                 contentW = preset.w;
                 contentH = preset.h;
             }
             try {
-                localStorage.setItem(ASPECT_STORAGE_KEY, ratio);
+                syncAllLayerCanvasSizesToContent?.();
             } catch {}
-            if (aspectRatioSelect) safeSetValue(aspectRatioSelect, ratio);
+            try {
+                localStorage.setItem(ASPECT_STORAGE_KEY, nextRatio);
+            } catch {}
+            if (createAspectSelect) safeSetValue(createAspectSelect, nextRatio);
             if (!skipResize) {
                 resizeCanvases();
+                try {
+                    queueRenderAll?.();
+                } catch {}
             }
         }
 
@@ -1136,14 +1163,12 @@
                 applyFont(savedFont);
             }
 
-            // Load aspect ratio
+            // Load preferred aspect for new projects
             let savedAspect = "16:9";
             try {
                 savedAspect = localStorage.getItem(ASPECT_STORAGE_KEY) || "16:9";
             } catch {}
-            if (ASPECT_RATIOS[savedAspect]) {
-                applyAspectRatio(savedAspect, true);
-            }
+            safeSetValue(createAspectSelect, normalizedAspectRatio(savedAspect));
         })();
 
         // Event listeners
@@ -1151,8 +1176,8 @@
             applyFont(e.target.value);
         });
 
-        aspectRatioSelect?.addEventListener("change", e => {
-            applyAspectRatio(e.target.value);
+        createAspectSelect?.addEventListener("change", e => {
+            applyAspectRatio(e.target.value, true);
         });
 
         const clampBrushSizeUiValue = raw => {
@@ -1284,6 +1309,289 @@
             }
         });
 
+        function collectLayerKeysAtFrame(L, F) {
+            const out = [];
+            const lay = layers?.[L];
+            if (!lay?.sublayers || !Array.isArray(lay.suborder)) return out;
+            for (const key of lay.suborder) {
+                const off = lay.sublayers.get(key)?.frames?.[F];
+                if (off && off._hasContent) out.push(key);
+            }
+            return out;
+        }
+
+        function clearFrameSubLayer(L, key, F) {
+            const lay = layers?.[L];
+            const sub = lay?.sublayers?.get?.(key);
+            if (!sub?.frames?.[F]) return false;
+            try {
+                beginGlobalHistoryStep?.(L, F, key);
+            } catch {}
+            sub.frames[F] = null;
+            try {
+                markGlobalHistoryDirty?.();
+                commitGlobalHistoryStep?.();
+            } catch {}
+            return true;
+        }
+
+        function applyPostClearUi() {
+            for (let L = 0; L < LAYERS_COUNT; L++) {
+                try {
+                    pruneUnusedSublayers(L);
+                } catch {}
+            }
+            try {
+                updateTimelineHasContent(currentFrame);
+            } catch {}
+            try {
+                renderLayerSwatches();
+            } catch {}
+            try {
+                queueRenderAll();
+            } catch {}
+            try {
+                queueUpdateHud();
+            } catch {}
+            try {
+                markProjectDirty?.();
+            } catch {}
+        }
+
+        function clearCurrentCelAction() {
+            let changed = false;
+            for (const L of MAIN_LAYERS) {
+                const keys = collectLayerKeysAtFrame(L, currentFrame);
+                for (const key of keys) {
+                    changed = clearFrameSubLayer(L, key, currentFrame) || changed;
+                }
+            }
+            if (!changed) return;
+            applyPostClearUi();
+        }
+
+        function clearSelectedColorAction() {
+            if (activeLayer === PAPER_LAYER) return;
+            const key = swatchColorKey(activeSubColor?.[activeLayer] || currentColor || "#000000");
+            if (!key) return;
+            const changed = clearFrameSubLayer(activeLayer, key, currentFrame);
+            if (!changed) return;
+            applyPostClearUi();
+        }
+
+        function clearSelectedLayerAction() {
+            if (activeLayer === PAPER_LAYER) return;
+            let changed = false;
+            const keys = collectLayerKeysAtFrame(activeLayer, currentFrame);
+            for (const key of keys) {
+                changed = clearFrameSubLayer(activeLayer, key, currentFrame) || changed;
+            }
+            if (!changed) return;
+            applyPostClearUi();
+        }
+
+        function blankProjectState() {
+            layers = new Array(LAYERS_COUNT).fill(0).map(() => ({
+                name: "",
+                opacity: 1,
+                prevOpacity: 1,
+                frames: new Array(totalFrames).fill(null),
+                sublayers: new Map,
+                suborder: []
+            }));
+            layers[LAYER.LINE].name = "LINE";
+            layers[LAYER.SHADE].name = "SHADE";
+            layers[LAYER.COLOR].name = "COLOR";
+            layers[LAYER.SKETCH].name = "SKETCH";
+            layers[LAYER.FILL].name = "FILL";
+            activeLayer = LAYER.LINE;
+            activeSubColor = new Array(LAYERS_COUNT).fill("#000000");
+            activeSubColor[LAYER.FILL] = fillWhite;
+            layerColorMem = new Array(LAYERS_COUNT).fill("#000000");
+            layerColorMem[LAYER.FILL] = fillWhite;
+            currentColor = "#000000";
+            currentFrame = 0;
+            clipStart = 0;
+            clipEnd = Math.min(totalFrames - 1, fps * 2 - 1);
+            try {
+                globalHistory.undo.length = 0;
+                globalHistory.redo.length = 0;
+                historyMap.clear();
+                _pendingGlobalStep = null;
+                _globalStepDirty = false;
+            } catch {}
+            try {
+                clearCelSelection?.();
+                clearRectSelection?.();
+                clearGhostTargets?.();
+                cancelLasso?.();
+            } catch {}
+        }
+
+        function readRecentProjects() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(RECENT_PROJECTS_KEY) || "[]");
+                if (!Array.isArray(raw)) return [];
+                return raw.filter(v => v && typeof v === "object" && typeof v.name === "string").slice(0, RECENT_PROJECTS_LIMIT);
+            } catch {
+                return [];
+            }
+        }
+
+        function writeRecentProjects(items) {
+            try {
+                localStorage.setItem(RECENT_PROJECTS_KEY, JSON.stringify(items.slice(0, RECENT_PROJECTS_LIMIT)));
+            } catch {}
+        }
+
+        function recordRecentProject(meta = {}) {
+            const name = String(meta.fileName || "Untitled Project").trim() || "Untitled Project";
+            const now = Date.now();
+            const nextItem = {
+                id: `${name}:${now}`,
+                name: name,
+                openedAt: now,
+                source: String(meta.source || "file"),
+                missing: true
+            };
+            const existing = readRecentProjects().filter(it => it.name !== name);
+            const next = [ nextItem, ...existing ].slice(0, RECENT_PROJECTS_LIMIT);
+            writeRecentProjects(next);
+            renderRecentProjects();
+        }
+
+        function removeRecentProject(id) {
+            const next = readRecentProjects().filter(it => it.id !== id);
+            writeRecentProjects(next);
+            renderRecentProjects();
+        }
+
+        function renderRecentProjects() {
+            if (!homeRecentList) return;
+            const items = readRecentProjects();
+            homeRecentList.innerHTML = "";
+            if (!items.length) {
+                const empty = document.createElement("div");
+                empty.className = "homeRecentSub";
+                empty.textContent = "No recent projects yet.";
+                homeRecentList.appendChild(empty);
+                return;
+            }
+            for (const item of items) {
+                const row = document.createElement("div");
+                row.className = "homeRecentItem";
+                const meta = document.createElement("div");
+                meta.className = "homeRecentMeta";
+                const name = document.createElement("div");
+                name.className = "homeRecentName";
+                name.textContent = item.name;
+                const sub = document.createElement("div");
+                sub.className = "homeRecentSub homeRecentMissing";
+                sub.textContent = "File link unavailable in-browser. Open manually if moved.";
+                meta.appendChild(name);
+                meta.appendChild(sub);
+                const rm = document.createElement("button");
+                rm.type = "button";
+                rm.className = "homeRecentRemove";
+                rm.textContent = "x";
+                rm.setAttribute("aria-label", `Remove ${item.name} from recent projects`);
+                rm.addEventListener("click", () => removeRecentProject(item.id));
+                row.appendChild(meta);
+                row.appendChild(rm);
+                homeRecentList.appendChild(row);
+            }
+        }
+
+        function refreshHomeDraftState() {
+            const hasDraft = !!autosaveController?.getPayload?.();
+            if (homeDraftBanner) homeDraftBanner.hidden = !hasDraft;
+            if (homeRestoreDraftBtn) homeRestoreDraftBtn.disabled = !hasDraft;
+        }
+
+        function openHomeModal() {
+            if (homeModalBackdrop) homeModalBackdrop.hidden = false;
+            if (homeModal) homeModal.hidden = false;
+            renderRecentProjects();
+            refreshHomeDraftState();
+            const preferredAspect = (() => {
+                try {
+                    return localStorage.getItem(ASPECT_STORAGE_KEY) || "16:9";
+                } catch {
+                    return "16:9";
+                }
+            })();
+            safeSetValue(createAspectSelect, normalizedAspectRatio(preferredAspect));
+        }
+
+        function closeHomeModal() {
+            if (homeModalBackdrop) homeModalBackdrop.hidden = true;
+            if (homeModal) homeModal.hidden = true;
+        }
+
+        function ensureProjectBooted() {
+            if (projectBooted) return;
+            buildAndInit();
+            projectBooted = true;
+        }
+
+        function startNewProject() {
+            ensureProjectBooted();
+            const ratio = createAspectSelect?.value || "16:9";
+            applyAspectRatio(ratio, true);
+            blankProjectState();
+            buildTimeline();
+            resizeCanvases();
+            resetCenter();
+            syncActiveLayerColorUI({
+                layer: LAYER.LINE,
+                color: "#000000",
+                remember: false,
+                redrawSwatches: true,
+                updateHud: true
+            });
+            setColorSwatch();
+            setHSVPreviewBox();
+            queueRenderAll();
+            queueUpdateHud();
+            markProjectClean("New Project");
+            closeHomeModal();
+        }
+
+        function openProjectFromFile(file, source = "file") {
+            if (!file) return;
+            ensureProjectBooted();
+            loadProject(file, {
+                source: source,
+                onLoaded: meta => {
+                    recordRecentProject(meta);
+                    closeHomeModal();
+                    refreshHomeDraftState();
+                },
+                onError: () => {
+                    refreshHomeDraftState();
+                }
+            });
+        }
+
+        function restoreDraftFromHome(source = "autosave-home") {
+            ensureProjectBooted();
+            const restored = autosaveController?.restoreLatest(source);
+            if (restored) closeHomeModal();
+            refreshHomeDraftState();
+            if (!restored) updateRestoreAutosaveButton();
+        }
+
+        clearCelBtn?.addEventListener("click", clearCurrentCelAction);
+        clearColorBtn?.addEventListener("click", clearSelectedColorAction);
+        clearLayerBtn?.addEventListener("click", clearSelectedLayerAction);
+        newProjBtn?.addEventListener("click", openHomeModal);
+        homeNewProjectBtn?.addEventListener("click", startNewProject);
+        homeOpenProjectBtn?.addEventListener("click", () => {
+            $("loadFileInp").value = "";
+            $("loadFileInp").click();
+        });
+        homeRestoreDraftBtn?.addEventListener("click", () => restoreDraftFromHome("autosave-home"));
+
         $("clearAllBtn")?.addEventListener("click", clearAllProjectState);
         $("dupCelBtn")?.addEventListener("click", onDuplicateCel);
         $("tlDupCel")?.addEventListener("click", onDuplicateCel);
@@ -1329,21 +1637,18 @@
                 loadFileInp.click();
             });
             restoreAutosaveBtn?.addEventListener("click", () => {
-                const restored = autosaveController?.restoreLatest("autosave-button");
-                if (!restored) updateRestoreAutosaveButton();
+                restoreDraftFromHome("autosave-button");
             });
             loadFileInp.addEventListener("change", e => {
                 const f = e.currentTarget.files?.[0] || null;
                 e.currentTarget.value = "";
-                if (f) loadProject(f, {
-                    source: "file"
-                });
+                if (f) openProjectFromFile(f, "file");
             });
             if (autosaveEnabled) setSaveStateBadge("Saved");
             wireAutosaveDirtyTracking();
             updateRestoreAutosaveButton();
-            if (autosaveEnabled) window.setTimeout(maybePromptAutosaveRecovery, 0);
             syncAutosaveUiState();
+            refreshHomeDraftState();
         }
         if (document.readyState === "loading") {
             window.addEventListener("DOMContentLoaded", initSaveLoadWiring, {
@@ -1394,6 +1699,7 @@
         }
         const ro = new ResizeObserver(resizeCanvases);
         ro.observe(stageEl);
+        if (stageEl.parentElement) ro.observe(stageEl.parentElement);
         window.addEventListener("resize", () => {
             resizeCanvases();
         });
@@ -1416,7 +1722,6 @@
         wireEraserButtonRightClick();
         wirePointerDrawingOnCanvas($("drawCanvas"));
 
-        // initialization flow (ie: calling predefined funcs)
-        buildAndInit();
+        openHomeModal();
     });
 })();

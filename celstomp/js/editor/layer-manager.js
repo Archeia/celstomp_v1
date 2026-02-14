@@ -185,14 +185,54 @@ function getFrameCanvas(L, F, colorStr) {
   if (!sub) return null;
   if (!sub.frames[F]) {
       const off = document.createElement("canvas");
-      // TODO: this is broken. figure out how to store/reload layer state efficiently
-      // (some sort of "project state" antecedent to export/history might be good)
-      off.width = 960;
-      off.height = 540;
+      off.width = Math.max(1, contentW | 0);
+      off.height = Math.max(1, contentH | 0);
       off._hasContent = false;
+      sub.frames[F] = off;
+  } else if ((sub.frames[F].width | 0) !== (contentW | 0) || (sub.frames[F].height | 0) !== (contentH | 0)) {
+      const old = sub.frames[F];
+      const off = document.createElement("canvas");
+      off.width = Math.max(1, contentW | 0);
+      off.height = Math.max(1, contentH | 0);
+      const ctx = off.getContext("2d");
+      if (ctx && old) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, off.width, off.height);
+          ctx.drawImage(old, 0, 0, old.width || 1, old.height || 1, 0, 0, off.width, off.height);
+      }
+      off._hasContent = !!old?._hasContent;
       sub.frames[F] = off;
   }
   return sub.frames[F];
+}
+
+function syncAllLayerCanvasSizesToContent() {
+    const targetW = Math.max(1, contentW | 0);
+    const targetH = Math.max(1, contentH | 0);
+    for (let L = 0; L < LAYERS_COUNT; L++) {
+        const layer = layers?.[L];
+        if (!layer?.sublayers) continue;
+        for (const [key, sub] of layer.sublayers.entries()) {
+            if (!sub?.frames) continue;
+            for (let F = 0; F < sub.frames.length; F++) {
+                const old = sub.frames[F];
+                if (!old) continue;
+                if ((old.width | 0) === targetW && (old.height | 0) === targetH) continue;
+                const off = document.createElement("canvas");
+                off.width = targetW;
+                off.height = targetH;
+                const ctx = off.getContext("2d");
+                if (ctx) {
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.clearRect(0, 0, targetW, targetH);
+                    ctx.drawImage(old, 0, 0, old.width || 1, old.height || 1, 0, 0, targetW, targetH);
+                }
+                off._hasContent = !!old._hasContent;
+                sub.frames[F] = off;
+            }
+            layer.sublayers.set(key, sub);
+        }
+    }
 }
 
 function ensureSublayer(L, colorStr) {

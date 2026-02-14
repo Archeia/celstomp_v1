@@ -86,7 +86,7 @@ function wireTopMenus() {
     });
     const wirePanelKeys = panel => {
         panel?.addEventListener("keydown", e => {
-            const items = menuFocusableItems(panel);
+            const items = _menuFocusableItems(panel);
             if (!items.length) return;
             const idx = Math.max(0, items.indexOf(document.activeElement));
             if (e.key === "ArrowDown") {

@@ -177,6 +177,20 @@ header.top .topSlot.right{
   padding: 0 8px;
 }
 
+.topMenuCheckRow{
+  grid-template-columns: 1fr auto;
+}
+
+.topMenuCheckRow input[type="checkbox"]{
+  justify-self: end;
+}
+
+.topMenuItem:disabled,
+.topBtn:disabled{
+  opacity: .5;
+  cursor: default;
+}
+
 .topMenuPenControls{
   display: grid;
   gap: 6px;

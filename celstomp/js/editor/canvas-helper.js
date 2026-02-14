@@ -27,8 +27,11 @@ function resizeCanvases() {
   const stageEl = $("stage");
 
   dpr = window.devicePixelRatio || 1;
-  const cw = stageEl.clientWidth || stageEl.getBoundingClientRect().width || window.innerWidth;
-  const ch = stageEl.clientHeight || stageEl.getBoundingClientRect().height || window.innerHeight;
+  const drawCanvas = $("drawCanvas");
+  const host = drawCanvas?.parentElement || stageEl;
+  const cssRect = drawCanvas?.getBoundingClientRect?.() || host?.getBoundingClientRect?.();
+  const cw = cssRect?.width || host?.clientWidth || stageEl.clientWidth || window.innerWidth;
+  const ch = cssRect?.height || host?.clientHeight || stageEl.clientHeight || window.innerHeight;
   if (cw < 10 || ch < 10) {
       console.warn("[celstomp] stage has no size yet:", {
           cw: cw,
@@ -41,20 +44,16 @@ function resizeCanvases() {
 
   // back
   const boundsCanvas = $("boundsCanvas");
-        
-  // mid
-  const drawCanvas = $("drawCanvas");
 
   // front
   const fxCanvas = $("fxCanvas");
 
 
   for (const c of [ boundsCanvas, drawCanvas, fxCanvas ]) {
-      c.style.width = cw + "px";
-      c.style.height = ch + "px";
-      c.width = Math.max(1, Math.floor(cw * dpr));
-      c.height = Math.max(1, Math.floor(ch * dpr));
+      c.width = Math.max(1, Math.round(cw * dpr));
+      c.height = Math.max(1, Math.round(ch * dpr));
   }
+  debugCheckCanvasSizing("resizeCanvases");
   queueRenderAll();
   queueClearFx();
   initBrushCursorPreview(drawCanvas);
@@ -93,7 +92,61 @@ function setTransform(ctx) {
   let dpr = window.devicePixelRatio || 1;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.setTransform(getZoom() * dpr, 0, 0, getZoom() * dpr, getOffsetX(), getOffsetY());
+  const z = getZoom() * dpr;
+  ctx.setTransform(z, 0, 0, z, getOffsetX(), getOffsetY());
+  if (isCanvasDebugEnabled()) {
+      const t = ctx.getTransform();
+      const ok = Math.abs(t.a - z) < 1e-6 && Math.abs(t.d - z) < 1e-6 && Math.abs(t.b) < 1e-6 && Math.abs(t.c) < 1e-6;
+      if (!ok) {
+          console.warn("[celstomp] unexpected canvas transform", {
+              canvasId: ctx.canvas?.id,
+              expectedScale: z,
+              expectedOffsetX: getOffsetX(),
+              expectedOffsetY: getOffsetY(),
+              actual: {
+                  a: t.a,
+                  b: t.b,
+                  c: t.c,
+                  d: t.d,
+                  e: t.e,
+                  f: t.f
+              }
+          });
+      }
+  }
+}
+
+function isCanvasDebugEnabled() {
+  try {
+      return window.__CELSTOMP_DEBUG_CANVAS === true || localStorage.getItem("celstomp_debug_canvas") === "1";
+  } catch {
+      return window.__CELSTOMP_DEBUG_CANVAS === true;
+  }
+}
+
+function debugCheckCanvasSizing(from = "") {
+  if (!isCanvasDebugEnabled()) return;
+  const canvases = [ $("boundsCanvas"), $("drawCanvas"), $("fxCanvas") ];
+  const curDpr = window.devicePixelRatio || 1;
+  for (const c of canvases) {
+      if (!(c instanceof HTMLCanvasElement)) continue;
+      const r = c.getBoundingClientRect();
+      const wantW = Math.max(1, Math.round(r.width * curDpr));
+      const wantH = Math.max(1, Math.round(r.height * curDpr));
+      if ((c.width | 0) !== wantW || (c.height | 0) !== wantH) {
+          console.warn("[celstomp] canvas backing store mismatch", {
+              from: from,
+              id: c.id,
+              cssWidth: r.width,
+              cssHeight: r.height,
+              dpr: curDpr,
+              actualWidth: c.width,
+              actualHeight: c.height,
+              expectedWidth: wantW,
+              expectedHeight: wantH
+          });
+      }
+  }
 }
 
 function centerView() {

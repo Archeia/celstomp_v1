@@ -7,6 +7,33 @@ document.getElementById('part-modals').innerHTML = `
   <input id="loadFileInp" type="file" accept=".json,application/json"
     style="position:fixed; left:-9999px; width:1px; height:1px; opacity:0;" />
 
+  <div id="homeModalBackdrop" class="modalBackdrop" hidden></div>
+  <div id="homeModal" class="modalCard homeModal" role="dialog" aria-modal="true" aria-labelledby="homeModalTitle" hidden>
+    <div id="homeDraftBanner" class="homeDraftBanner" hidden>
+      Draft available. You can restore it now.
+    </div>
+    <h3 id="homeModalTitle">Welcome to Celstomp</h3>
+    <p>Start by creating a project or loading one from disk.</p>
+    <label class="sideSelectRow" for="createAspectSelect">
+      <span>Canvas Aspect</span>
+      <select id="createAspectSelect">
+        <option value="16:9">16:9 (1920x1080)</option>
+        <option value="4:3">4:3 (1600x1200)</option>
+        <option value="3:2">3:2 (1800x1200)</option>
+        <option value="2:3">2:3 (1200x1800)</option>
+        <option value="1:1">1:1 (1200x1200)</option>
+        <option value="9:16">9:16 (1080x1920)</option>
+      </select>
+    </label>
+    <div class="modalActions homeActions">
+      <button id="homeNewProjectBtn" type="button">New Project</button>
+      <button id="homeOpenProjectBtn" type="button">Open Project</button>
+      <button id="homeRestoreDraftBtn" type="button" disabled>Restore Draft</button>
+    </div>
+    <div class="homeRecentHead">Recent Projects</div>
+    <div id="homeRecentList" class="homeRecentList" aria-live="polite"></div>
+  </div>
+
   <div id="mobileGateBackdrop" class="modalBackdrop" hidden></div>
   <div id="mobileGateModal" class="modalCard mobileGateCard" role="dialog" aria-modal="true" aria-labelledby="mobileGateTitle" aria-describedby="mobileGateBody" hidden>
     <h3 id="mobileGateTitle">Use desktop or tablet for the best experience</h3>

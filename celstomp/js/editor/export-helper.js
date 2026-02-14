@@ -837,9 +837,21 @@ function loadProject(file, options = {}) {
           } else {
               markProjectClean("Loaded");
           }
+          try {
+              options?.onLoaded?.({
+                  source: source,
+                  fileName: file?.name || null,
+                  contentW: contentW,
+                  contentH: contentH,
+                  totalFrames: totalFrames
+              });
+          } catch {}
           updateRestoreAutosaveButton();
       })().catch(err => {
           console.warn("[celstomp] loadProject failed:", err);
+          try {
+              options?.onError?.(err);
+          } catch {}
           alert("Failed to load project:\n" + (err?.message || String(err)));
       });
   };

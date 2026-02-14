@@ -183,7 +183,13 @@ function drawExactCel(ctx, idx) {
         if (!srcCanvases.length) continue;
         ctx.save();
         ctx.globalAlpha *= op;
-        for (const off of srcCanvases) ctx.drawImage(off, 0, 0);
+        for (const off of srcCanvases) {
+            if ((off.width | 0) !== (contentW | 0) || (off.height | 0) !== (contentH | 0)) {
+                ctx.drawImage(off, 0, 0, off.width, off.height, 0, 0, contentW, contentH);
+            } else {
+                ctx.drawImage(off, 0, 0);
+            }
+        }
         ctx.restore();
     }
 }

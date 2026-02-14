@@ -85,8 +85,7 @@ function snapshotFor(L, F, key) {
             willReadFrequently: true
         });
 
-        // TODO: sample proper w/h in snapshotFor and applySnapshot
-        return ctx.getImageData(0, 0, 960, 540);
+        return ctx.getImageData(0, 0, contentW, contentH);
     } catch {
         return null;
     }
@@ -99,7 +98,7 @@ function applySnapshot(L, F, key, shot) {
         willReadFrequently: true
     });
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, 960, 540);
+    ctx.clearRect(0, 0, contentW, contentH);
     if (shot) {
         ctx.putImageData(shot, 0, 0);
         c._hasContent = true;
