@@ -179,10 +179,13 @@ function drawExactCel(ctx, idx) {
         if (!layer) continue;
         const op = layer.opacity ?? 1;
         if (op <= 0) continue;
+        const blendOp = typeof layerBlendModeCanvasOperation === "function" ? layerBlendModeCanvasOperation(layer.blendMode) : "source-over";
         const srcCanvases = canvasesWithContentForMainLayerFrame(L, idx);
         if (!srcCanvases.length) continue;
         ctx.save();
         ctx.globalAlpha *= op;
+
+        ctx.globalCompositeOperation = blendOp;
         for (const off of srcCanvases) {
             if ((off.width | 0) !== (contentW | 0) || (off.height | 0) !== (contentH | 0)) {
                 ctx.drawImage(off, 0, 0, off.width, off.height, 0, 0, contentW, contentH);
@@ -190,6 +193,7 @@ function drawExactCel(ctx, idx) {
                 ctx.drawImage(off, 0, 0);
             }
         }
+
         ctx.restore();
     }
 }
