@@ -4,6 +4,8 @@ name: Deploy to Development Testing Site
 on:
   push:
     branches: [main]
+    paths:
+      - "celstomp/**"
   workflow_dispatch:
 
 concurrency:
