@@ -13,7 +13,8 @@ I come from an art background and built this while learning to code.
 
 ## Live Site
 
-https://ginyo.space/celstomp/
+**Official site:** https://ginyo.space/celstomp/  
+**Development testing site:** https://celstomp-indev.nichesite.org/
 
 ## Features
 
